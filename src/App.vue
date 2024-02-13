@@ -161,11 +161,11 @@
         // if ollama has nothing more to say, show statistics
         if (json.done === true) {
           responses.value[responses.value.length - 1].value +=
-              `\n\n<pre class="system"><code>Total duration: ${humanNumber(nanosecondsToSeconds(json.total_duration))} seconds
+              `\n\n<pre class="system">Total duration: ${humanNumber(nanosecondsToSeconds(json.total_duration))} seconds
 Load duration: ${humanNumber(nanosecondsToSeconds(json.load_duration))} seconds
 Eval duration: ${humanNumber(nanosecondsToSeconds(json.eval_duration))} seconds
 Prompt tokens: ${json.prompt_eval_count}
-Eval tokens: ${json.eval_count}</code></pre>`;
+Eval tokens: ${json.eval_count}</pre>`;
         }
 
         // scroll only if the scrollbar is at the bottom
@@ -309,13 +309,12 @@ Eval tokens: ${json.eval_count}</code></pre>`;
 <style>
   @import "highlight.js/styles/androidstudio.css";
 
-  pre {
+  pre, code {
     background: black;
     color: white;
   }
 
   code {
-    background: transparent;
     padding: 0 0.5rem 0 0.5rem;
   }
 
