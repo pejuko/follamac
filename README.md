@@ -1,3 +1,5 @@
+<img alt="screenshot" width="800" src="https://github.com/pejuko/follamac/blob/main/images/screenshot.png?raw=true" />
+
 # Free Ollama Client
 
 Free Ollama Client is an electron application and provides convenient way to work with
