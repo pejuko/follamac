@@ -161,7 +161,7 @@
         // if ollama has nothing more to say, show statistics
         if (json.done === true) {
           responses.value[responses.value.length - 1].value +=
-              `<pre class="system"><code>Total duration: ${humanNumber(nanosecondsToSeconds(json.total_duration))} seconds
+              `\n\n<pre class="system"><code>Total duration: ${humanNumber(nanosecondsToSeconds(json.total_duration))} seconds
 Load duration: ${humanNumber(nanosecondsToSeconds(json.load_duration))} seconds
 Eval duration: ${humanNumber(nanosecondsToSeconds(json.eval_duration))} seconds
 Prompt tokens: ${json.prompt_eval_count}
