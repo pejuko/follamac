@@ -20,7 +20,7 @@
       <input id="url" v-model="settingsForm.url" />
 
       <label for="model">Model</label>
-      <select id="model" v-model="settingsForm.model">
+      <select id="model" v-model="settingsForm.model" @change="fetchCurrentModelDetails()">
         <option v-for="model in models">{{ model.model }}</option>
       </select>
 
@@ -37,6 +37,9 @@
 
       <label for="num_thread">Threads</label>
       <input id="num_thread" v-model="settingsForm.num_thread" />
+
+      <label for="system">System</label>
+      <textarea id="system" v-model="settingsForm.system" />
     </div>
   </div>
 </template>
@@ -52,12 +55,12 @@
     markedHighlight({
       langPrefix: 'language-',
       highlight(code, lang, info) {
-        const language = hljs.getLanguage(lang) ? lang : 'plaintext';
         return hljs.highlightAuto(code).value;
-        return hljs.highlight(code, {
-          language,
-          ignoreIllegals: true,
-        }).value;
+        // const language = hljs.getLanguage(lang) ? lang : 'plaintext';
+        // return hljs.highlight(code, {
+        //   language,
+        //   ignoreIllegals: true,
+        // }).value;
       },
     })
   );
@@ -67,7 +70,11 @@
     model: 'mistral:latest',
     temperature: '0.8',
     num_thread: '4',
+    system: null,
+    context: [],
   });
+
+  const currentModelDetail = ref({});
 
   const models = ref([]);
   const responses = ref([]);
@@ -104,6 +111,14 @@
         temperature: parseFloat(settingsForm.temperature),
         num_thread: parseInt(settingsForm.num_thread),
       }
+    }
+
+    if (settingsForm.system) {
+      data['system'] = settingsForm.system;
+    }
+
+    if (settingsForm.context) {
+      data['context'] = settingsForm.context;
     }
 
     // push user prompt to chat as user and reset userPrompt
@@ -160,6 +175,7 @@
 
         // if ollama has nothing more to say, show statistics
         if (json.done === true) {
+          settingsForm.context = json.context;
           responses.value[responses.value.length - 1].value +=
               `\n\n<pre class="system">Total duration: ${humanNumber(nanosecondsToSeconds(json.total_duration))} seconds
 Load duration: ${humanNumber(nanosecondsToSeconds(json.load_duration))} seconds
@@ -196,8 +212,30 @@ Eval tokens: ${json.eval_count}</pre>`;
     models.value = json.models;
   }
 
+  async function fetchCurrentModelDetails() {
+    const data = {
+      name: settingsForm.model,
+    };
+
+    // make a POST request to ollama server
+    const response = await fetch(settingsForm.url + '/api/show', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+
+    currentModelDetail.value = await response.json();
+    if (currentModelDetail.value.system) {
+      settingsForm.system = currentModelDetail.value.system;
+    }
+    // console.log(currentModelDetail.value);
+  }
+
   onMounted(() => {
     getModels();
+    fetchCurrentModelDetails();
   });
 </script>
 
@@ -239,7 +277,7 @@ Eval tokens: ${json.eval_count}</pre>`;
     overflow-y: scroll;
   }
 
-  .right-panel input, .right-panel select {
+  .right-panel input, .right-panel select, .right-panel textarea {
     padding: 0.5rem;
   }
 
