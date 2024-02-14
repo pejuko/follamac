@@ -4,14 +4,31 @@
 
     <div class="central-area">
       <div id="chat" class="chat">
-        <div v-for="response in responses" :class="[ 'response', response.who ]" v-html="markdownToHtml(response.value)"></div>
+        <div v-for="response in responses" :class="[ 'response', response.role ]" v-html="markdownToHtml(response.content)"></div>
       </div>
 
-      <div class="prompt">
-        <div class="row">
-          <textarea v-model="userPrompt" placeholder="Enter your prompt..." />
+      <div class="row prompt">
+        <textarea v-model="userPrompt" placeholder="Enter your prompt..." />
+
+        <div class="col">
           <button type="submit" @click.prevent="submitPrompt">Submit</button>
+
+          <div class="row radio">
+            <input id="method-chat" type="radio" v-model="settingsForm.method" value="chat" />
+            <label for="method-chat" class="radio">Chat</label>
+          </div>
+
+          <div class="row radio">
+            <input id="method-generate" type="radio" v-model="settingsForm.method" value="generate" />
+            <label for="method-generate" class="radio">Generate</label>
+          </div>
         </div>
+      </div>
+
+      <div class="row statistics">
+        <span><b>Time:</b> {{ humanTime(nanosecondsToSeconds(statistics.total_time)) }}</span>
+        <span><b>Prompt tokens:</b> {{ statistics.total_prompt_tokens }}</span>
+        <span><b>Server tokens:</b> {{ statistics.total_eval_tokens }}</span>
       </div>
     </div>
 
@@ -21,7 +38,7 @@
 
       <label for="model">Model</label>
       <select id="model" v-model="settingsForm.model" @change="fetchCurrentModelDetails()">
-        <option v-for="model in models">{{ model.model }}</option>
+        <option v-for="model in models">{{ model.name }}</option>
       </select>
 
       <div v-if="currentModel" class="model-detail">
@@ -38,8 +55,10 @@
       <label for="num_thread">Threads</label>
       <input id="num_thread" v-model="settingsForm.num_thread" />
 
-      <label for="system">System</label>
-      <textarea id="system" v-model="settingsForm.system" />
+      <div v-if="settingsForm.method === 'generate'" style="margin-top: 1rem;">
+        <label for="system">System</label>
+        <textarea id="system" v-model="settingsForm.system" />
+      </div>
     </div>
   </div>
 </template>
@@ -50,6 +69,7 @@
   import DOMPurify from 'dompurify';
   import { markedHighlight } from "marked-highlight";
   import hljs from 'highlight.js';
+  import { Ollama } from 'ollama';
 
   const marked = new Marked(
     markedHighlight({
@@ -72,6 +92,13 @@
     num_thread: '4',
     system: null,
     context: [],
+    method: 'chat',
+  });
+
+  const statistics = reactive({
+    total_prompt_tokens: 0,
+    total_eval_tokens: 0,
+    total_time: 0,
   });
 
   const currentModelDetail = ref({});
@@ -81,12 +108,19 @@
   const userPrompt = ref('');
 
   const currentModel = computed(() => {
-    return models.value.find(m => m.model === settingsForm.model);
+    return models.value.find(m => m.name === settingsForm.model);
   });
 
   function humanNumber(number) {
     const formater = new Intl.NumberFormat();
     return formater.format(number);
+  }
+
+  function humanTime(seconds) {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const sec = Math.round((seconds % 60) * 100) / 100;
+    return `${hours}:${minutes}:${sec}`;
   }
 
   function nanosecondsToSeconds(number) {
@@ -102,135 +136,114 @@
     ));
   }
 
-  // Submit the prompt to the server and continuously update the chat
-  async function submitPrompt() {
-    let data = {
-      prompt: userPrompt.value,
-      model: settingsForm.model,
-      options: {
-        temperature: parseFloat(settingsForm.temperature),
-        num_thread: parseInt(settingsForm.num_thread),
+  function getOlamaOptions() {
+    return {
+      temperature: parseFloat(settingsForm.temperature),
+      num_thread: parseInt(settingsForm.num_thread),
+    };
+  }
+
+  // get DOM element with id 'chat'
+  function getChatElement() {
+    return document.getElementById('chat');
+  }
+
+  // read Ollama's stream response
+  async function readOllamaResponse(response, chatElement) {
+    let total_text = '';
+    for await (const part of response) {
+      total_text += part.message ? part.message.content : part.response;
+      responses.value[responses.value.length - 1].content = total_text;
+
+      // if ollama has nothing more to say, show statistics
+      if (part.done === true) {
+        if (part.context) {
+          settingsForm.context = part.context;
+        }
+
+        statistics.total_time += part.total_duration;
+        statistics.total_prompt_tokens += part.prompt_eval_count;
+        statistics.total_eval_tokens += part.eval_count;
+
+        responses.value[responses.value.length - 1].content +=
+            `\n\n<pre class="system">Total duration: ${humanNumber(nanosecondsToSeconds(part.total_duration))} seconds
+Load duration: ${humanNumber(nanosecondsToSeconds(part.load_duration))} seconds
+Eval duration: ${humanNumber(nanosecondsToSeconds(part.eval_duration))} seconds
+Prompt tokens: ${part.prompt_eval_count}
+Eval tokens: ${part.eval_count}</pre>`;
       }
+      chatElement.scrollTo(0, chatElement.scrollHeight);
     }
+  }
 
-    if (settingsForm.system) {
-      data['system'] = settingsForm.system;
-    }
+  // create new instance of Ollama using current url
+  function getOllama() {
+    return new Ollama({ host: settingsForm.url });
+  }
 
-    if (settingsForm.context) {
-      data['context'] = settingsForm.context;
-    }
-
-    // push user prompt to chat as user and reset userPrompt
-    responses.value.push({ who: 'user', value: userPrompt.value });
-    userPrompt.value = '';
-
+  // send message to the server using method chat
+  async function chatWithOlama(message) {
     // scroll down the chat, so the user prompt is visible
-    const chatElement = document.getElementById('chat');
+    const chatElement = getChatElement();
     chatElement.scrollTo(0, chatElement.scrollHeight);
 
-    // prepare a bubble for ollama response
-    responses.value.push({ who: 'ollama', value: 'Waiting...'});
-
-    // make a POST request to ollama server
-    const response = await fetch(settingsForm.url + '/api/generate', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data),
+    // make a request to Ollama server
+    const response = await getOllama().chat({
+      model: settingsForm.model, messages: [message], stream: true, options: getOlamaOptions()
     });
 
-    // remove the Waiting... message
-    responses.value[responses.value.length - 1].value = '';
+    await readOllamaResponse(response, chatElement);
+  }
 
-    // get the reader and read the available data received from the server in a loop
-    const reader = await response.body.getReader();
-    let value = await reader.read();
-    let total_text = '';
-    while (value.done === false) {
-      // convert the data to text and combine it with already received text
-      // previously received text can be incomplete so we need to always update this variable
-      total_text += new TextDecoder().decode(value.value);
+  // send mesage to the server using method generate
+  async function generateWithOlama(message) {
+    // scroll down the chat, so the user prompt is visible
+    const chatElement = getChatElement();
+    chatElement.scrollTo(0, chatElement.scrollHeight);
 
-      // split received data by new line delimiter and filter out non empty chunks
-      const regex = /\n/;
-      let chunks = total_text.split(regex).filter(c => c);
-      let chunk = null;
-      let message = ''
-      try {
-        let json = null;
+    // make a request to Ollama server
+    const response = await getOllama().generate({
+      model: settingsForm.model,
+      prompt: message.content,
+      stream: true,
+      system: settingsForm.system,
+      context: settingsForm.context,
+      options: getOlamaOptions()
+    });
 
-        // compile the message
-        for (chunk of chunks) {
-          if (chunk === '') {
-            continue;
-          }
-          json = JSON.parse(chunk);
-          message += json.response;
-        }
+    await readOllamaResponse(response, chatElement);
+  }
 
-        // update last entry in the response array
-        responses.value[responses.value.length - 1].value = message;
+  // Submit the prompt to the server and continuously update the chat
+  function submitPrompt() {
+    const message = { role: 'user', content: userPrompt.value };
 
-        // if ollama has nothing more to say, show statistics
-        if (json.done === true) {
-          settingsForm.context = json.context;
-          responses.value[responses.value.length - 1].value +=
-              `\n\n<pre class="system">Total duration: ${humanNumber(nanosecondsToSeconds(json.total_duration))} seconds
-Load duration: ${humanNumber(nanosecondsToSeconds(json.load_duration))} seconds
-Eval duration: ${humanNumber(nanosecondsToSeconds(json.eval_duration))} seconds
-Prompt tokens: ${json.prompt_eval_count}
-Eval tokens: ${json.eval_count}</pre>`;
-        }
+    // push user prompt to chat as user and reset userPrompt
+    responses.value.push(message);
+    userPrompt.value = '';
 
-        // scroll only if the scrollbar is at the bottom
-        // const total = (chatElement.scrollHeight - chatElement.scrollTop) - chatElement.clientHeight;
-        // if (total < 200) {
-          chatElement.scrollTo(0, chatElement.scrollHeight);
-        // }
-      } catch (e) {
-        console.log(e);
-      }
+    // prepare a bubble for ollama response
+    responses.value.push({ role: 'ollama', content: 'Waiting...'});
 
-      // read next portion of data
-      value = await reader.read()
+    if (settingsForm.method === 'chat') {
+      chatWithOlama(message);
+    } else {
+      generateWithOlama(message);
     }
   }
 
   // get list of installed models on the server
   async function getModels() {
-    // send get request
-    const response = await fetch(settingsForm.url + '/api/tags', {
-      headers: {
-        'Content-Type': 'appication/json',
-      }
-    });
-
-    // convert to json and store list of models in variable
-    const json = await response.json();
-    models.value = json.models;
+    const list = await getOllama().list();
+    models.value = list.models;
   }
 
+  // get additional model information
   async function fetchCurrentModelDetails() {
-    const data = {
-      name: settingsForm.model,
-    };
-
-    // make a POST request to ollama server
-    const response = await fetch(settingsForm.url + '/api/show', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data),
-    });
-
-    currentModelDetail.value = await response.json();
+    currentModelDetail.value = await getOllama().show({ model: settingsForm.model });
     if (currentModelDetail.value.system) {
       settingsForm.system = currentModelDetail.value.system;
     }
-    // console.log(currentModelDetail.value);
   }
 
   onMounted(() => {
@@ -285,6 +298,15 @@ Eval tokens: ${json.eval_count}</pre>`;
     margin-top: 1rem;
   }
 
+  label.radio {
+    margin: 0;
+    margin-left: 1rem;
+  }
+
+  .row.radio {
+    margin-top: 0.5rem;
+  }
+
   button:hover {
     background: #d0d0d0;
     cursor: pointer;
@@ -293,6 +315,16 @@ Eval tokens: ${json.eval_count}</pre>`;
   .row {
     display: flex;
     flex-direction: row;
+  }
+
+  .col {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .statistics {
+    margin-top: 0.5rem;
+    justify-content: space-evenly;
   }
 
   .prompt textarea {
