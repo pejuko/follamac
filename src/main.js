@@ -1,10 +1,15 @@
-const { app, Menu, BrowserWindow } = require('electron');
+const { app, Menu, BrowserWindow, shell } = require('electron');
 const path = require('path');
 
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) {
   app.quit();
 }
+
+// Opens link in a default browser
+const openExternalLink = (link) => {
+  return shell.openExternal(link);
+};
 
 const createWindow = () => {
   // Create the browser window.
@@ -15,6 +20,11 @@ const createWindow = () => {
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
     },
+  });
+
+  mainWindow.webContents.on('will-navigate', (e, url) => {
+    openExternalLink(url);
+    e.preventDefault();
   });
 
   // and load the index.html of the app.
