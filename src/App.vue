@@ -274,7 +274,7 @@ Eval tokens: ${json.eval_count}</pre>`;
     border: 1px solid black;
     border-radius: 0.5rem;
     padding: 0.5rem;
-    overflow-y: scroll;
+    overflow-y: auto;
   }
 
   .right-panel input, .right-panel select, .right-panel textarea {
@@ -321,6 +321,7 @@ Eval tokens: ${json.eval_count}</pre>`;
   .response {
     margin: 1rem;
     padding: 1.5rem 2rem 1.5rem 2rem;
+    word-wrap: anywhere;
   }
 
   .user {
