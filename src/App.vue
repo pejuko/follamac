@@ -34,30 +34,40 @@
 
     <div class="right-panel">
       <label for="url">Url</label>
-      <input id="url" v-model="settingsForm.url" />
+      <input id="url" v-model="settingsForm.url" @change="getModels()" />
 
-      <label for="model">Model</label>
-      <select id="model" v-model="settingsForm.model" @change="fetchCurrentModelDetails()">
-        <option v-for="model in models">{{ model.name }}</option>
-      </select>
-
-      <div v-if="currentModel" class="model-detail">
-        <i>Family: </i>{{ currentModel.details.family }}<br />
-        <i>Format: </i>{{ currentModel.details.format }}<br />
-        <i>Parametr size: </i>{{ currentModel.details.parameter_size }}<br />
-        <i>Quantization level: </i>{{ currentModel.details.quantization_level }}<br />
-        <i>Size: </i>{{ humanNumber(currentModel.size / 1024 / 1024) }} MiB<br />
+      <div v-if="errorMessage" class="col error">
+        {{ errorMessage }}
       </div>
 
-      <label for="temperature">Temperature</label>
-      <input id="temperature" v-model="settingsForm.temperature" />
+      <div v-if="models.length > 0" class="col">
+        <label for="model">Model</label>
+        <select id="model" v-model="settingsForm.model" @change="fetchCurrentModelDetails()">
+          <option v-for="model in models">{{ model.name }}</option>
+        </select>
 
-      <label for="num_thread">Threads</label>
-      <input id="num_thread" v-model="settingsForm.num_thread" />
+        <div v-if="currentModel" class="model-detail">
+          <i>Family: </i>{{ currentModel.details.family }}<br />
+          <i>Format: </i>{{ currentModel.details.format }}<br />
+          <i>Parametr size: </i>{{ currentModel.details.parameter_size }}<br />
+          <i>Quantization level: </i>{{ currentModel.details.quantization_level }}<br />
+          <i>Size: </i>{{ humanNumber(currentModel.size / 1024 / 1024) }} MiB<br />
+        </div>
 
-      <div v-if="settingsForm.method === 'generate'" style="margin-top: 1rem;">
-        <label for="system">System</label>
-        <textarea id="system" v-model="settingsForm.system" />
+        <label for="temperature">Temperature</label>
+        <input id="temperature" v-model="settingsForm.temperature" />
+
+        <label for="num_thread">Threads</label>
+        <input id="num_thread" v-model="settingsForm.num_thread" />
+
+        <div v-if="settingsForm.method === 'generate'" style="margin-top: 1rem;">
+          <label for="system">System</label>
+          <textarea id="system" v-model="settingsForm.system" />
+        </div>
+      </div>
+
+      <div v-else class="col">
+        <button @click.prevent="getModels()">Reload</button>
       </div>
     </div>
   </div>
@@ -103,6 +113,7 @@
   });
 
   const currentModelDetail = ref({});
+  const errorMessage = ref(null);
 
   const models = ref([]);
   const responses = ref([]);
@@ -296,8 +307,16 @@ Eval tokens: ${part.eval_count}</pre>`;
 
   // get list of installed models on the server
   async function getModels() {
-    const list = await getOllama().list();
-    models.value = list.models;
+    models.value = [];
+    try {
+      const list = await getOllama().list();
+      models.value = list.models;
+      await fetchCurrentModelDetails();
+      errorMessage.value = null;
+    } catch (e) {
+      console.log(e);
+      errorMessage.value = 'There is connection problem.';
+    }
   }
 
   // get additional model information
@@ -310,7 +329,6 @@ Eval tokens: ${part.eval_count}</pre>`;
 
   onMounted(() => {
     getModels();
-    fetchCurrentModelDetails();
   });
 </script>
 
@@ -399,7 +417,7 @@ Eval tokens: ${part.eval_count}</pre>`;
     margin-right: 1rem;
   }
 
-  .prompt button {
+  button {
     height: 2rem;
     padding: 0.5rem;
     border: 1px solid black;
@@ -436,6 +454,11 @@ Eval tokens: ${part.eval_count}</pre>`;
 
   .model-detail {
     margin-top: 1rem;
+  }
+
+  .error {
+    color: red;
+    font-weight: bold;
   }
 </style>
 
