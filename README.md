@@ -33,3 +33,12 @@ yarn build-appimage
 ```bash
 ./dist/Free\ Ollama\ Client-0.0.1.AppImage
 ```
+
+## Keyboard shortcuts
+
+- `ctrl + i` - opens developer tools
+
+## Attribution
+
+<img alt="chatbot" width="64" height="64" src="https://github.com/pejuko/follamac/blob/main/src/images/chatbot.png?raw=true" />
+<a href="https://www.flaticon.com/free-icons/personal-assistant" title="personal-assistant icons">Personal-assistant icons created by edt.im - Flaticon</a>

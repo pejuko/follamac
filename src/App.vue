@@ -4,7 +4,10 @@
 
     <div class="central-area">
       <div id="chat" class="chat">
-        <div v-for="response in responses" :class="[ 'response', response.role ]" v-html="markdownToHtml(response.content)"></div>
+        <div v-for="response in responses" class="row">
+          <img v-if="response.role !== 'user'" src="./images/chatbot.png" width="24px" height="24" style="margin-top: 1rem;" />
+          <div :class="[ 'response', response.role ]" v-html="markdownToHtml(response.content)"></div>
+        </div>
       </div>
 
       <div class="row prompt">
@@ -434,6 +437,7 @@ Eval tokens: ${part.eval_count}</pre>`;
     margin: 1rem;
     padding: 1.5rem 2rem 1.5rem 2rem;
     word-wrap: anywhere;
+    width: 100%;
   }
 
   .user {

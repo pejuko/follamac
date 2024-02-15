@@ -1,6 +1,6 @@
 module.exports = {
   packagerConfig: {
-    icon: 'images/icon',
+    icon: 'build/icons/icon',
     executableName: 'follamac',
   },
   rebuildConfig: {},
@@ -17,7 +17,7 @@ module.exports = {
       name: '@electron-forge/maker-deb',
       config: {
         options: {
-          icon: 'images/icon.png'
+          icon: 'build/icons/icon.png'
         },
       },
     },
@@ -25,20 +25,20 @@ module.exports = {
       name: '@electron-forge/maker-rpm',
       config: {
         options: {
-          icon: 'images/icon.png'
+          icon: 'build/icons/icon.png'
         },
       },
     },
-    {
-      name: '@electron-forge/maker-flatpak',
-      config: {
-        runtimeVersion: "23.08",
-        baseVersion: "23.08",
-        options: {
-          categories: ['Utility'],
-        }
-      }
-    }
+    // {
+    //   name: '@electron-forge/maker-flatpak',
+    //   config: {
+    //     runtimeVersion: "23.08",
+    //     baseVersion: "23.08",
+    //     options: {
+    //       categories: ['Utility'],
+    //     }
+    //   }
+    // }
   ],
   plugins: [
     {
