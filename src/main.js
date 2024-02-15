@@ -27,6 +27,13 @@ const createWindow = () => {
     e.preventDefault();
   });
 
+  mainWindow.webContents.on('before-input-event', (event, input) => {
+    if (input.control && input.key.toLowerCase() === 'i') {
+      mainWindow.webContents.openDevTools();
+      event.preventDefault()
+    }
+  });
+
   // and load the index.html of the app.
   if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
     mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
