@@ -34,7 +34,7 @@
     "@electron-forge/plugin-auto-unpack-natives": "^7.2.0",
     "@electron-forge/plugin-vite": "^7.2.0",
     "@vitejs/plugin-vue": "^5.0.4",
-    "electron": "28.2.2",
+    "electron": "28.2.3",
     "electron-builder": "^24.9.1"
   },
   "dependencies": {
