@@ -69,7 +69,7 @@
   import DOMPurify from 'dompurify';
   import { markedHighlight } from "marked-highlight";
   import hljs from 'highlight.js';
-  import { Ollama } from 'ollama';
+  import { Ollama } from '@/clients/ollama';
 
   const marked = new Marked(
     markedHighlight({
@@ -93,6 +93,7 @@
     system: null,
     context: [],
     method: 'chat',
+    pastMessages: [],
   });
 
   const statistics = reactive({
@@ -150,7 +151,62 @@
 
   // read Ollama's stream response
   async function readOllamaResponse(response, chatElement) {
+    // get the reader and read the available data received from the server in a loop
+    const reader = await response.body.getReader();
+    let value = await reader.read();
     let total_text = '';
+    let messages = [];
+    while (value.done === false) {
+      // convert the data to text and combine it with already received text
+      // previously received text can be incomplete so we need to always update this variable
+      total_text += new TextDecoder().decode(value.value);
+      // split received data by new line delimiter and filter out non empty chunks
+      const regex = /\n/;
+      let chunks = total_text.split(regex).filter(c => c && c !== '');
+      let chunk = null;
+      let message = ''
+      messages = [];
+      try {
+        let json = null;
+        // compile the message
+        for (chunk of chunks) {
+          json = JSON.parse(chunk);
+          message += json.message ? json.message.content : json.response;
+          if (json.context) {
+            settingsForm.context = json.context;
+          }
+        }
+        // update last entry in the response array
+        responses.value[responses.value.length - 1].content = message;
+        // if ollama has nothing more to say, show statistics
+        if (json.done === true) {
+          if (json.message) {
+            messages = [{ role: json.message.role, content: message }];
+          }
+          statistics.total_time += json.total_duration;
+          statistics.total_prompt_tokens += json.prompt_eval_count;
+          statistics.total_eval_tokens += json.eval_count;
+
+          responses.value[responses.value.length - 1].content +=
+              `<pre class="system">Total duration: ${humanNumber(nanosecondsToSeconds(json.total_duration))} seconds
+Load duration: ${humanNumber(nanosecondsToSeconds(json.load_duration))} seconds
+Eval duration: ${humanNumber(nanosecondsToSeconds(json.eval_duration))} seconds
+Prompt tokens: ${json.prompt_eval_count}
+Eval tokens: ${json.eval_count}</pre>`;
+        }
+        chatElement.scrollTo(0, chatElement.scrollHeight);
+      } catch (e) {
+        console.log(e);
+      }
+      // read next portion of data
+      value = await reader.read()
+    }
+
+    return messages;
+
+    /**
+     * part for ollama-js client
+     *
     for await (const part of response) {
       total_text += part.message ? part.message.content : part.response;
       responses.value[responses.value.length - 1].content = total_text;
@@ -174,11 +230,12 @@ Eval tokens: ${part.eval_count}</pre>`;
       }
       chatElement.scrollTo(0, chatElement.scrollHeight);
     }
+     */
   }
 
   // create new instance of Ollama using current url
   function getOllama() {
-    return new Ollama({ host: settingsForm.url });
+    return new Ollama(settingsForm.url);
   }
 
   // send message to the server using method chat
@@ -187,12 +244,17 @@ Eval tokens: ${part.eval_count}</pre>`;
     const chatElement = getChatElement();
     chatElement.scrollTo(0, chatElement.scrollHeight);
 
+    let messages = [...settingsForm.pastMessages, message];
+
     // make a request to Ollama server
     const response = await getOllama().chat({
-      model: settingsForm.model, messages: [message], stream: true, options: getOlamaOptions()
+      model: settingsForm.model, messages: messages, stream: true, options: getOlamaOptions()
     });
 
-    await readOllamaResponse(response, chatElement);
+    settingsForm.pastMessages = [
+      ...settingsForm.pastMessages,
+      ...await readOllamaResponse(response, chatElement)
+    ];
   }
 
   // send mesage to the server using method generate
