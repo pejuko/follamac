@@ -60,7 +60,7 @@
         <label for="num_thread">Threads</label>
         <input id="num_thread" v-model="settingsForm.num_thread" />
 
-        <div v-if="settingsForm.method === 'generate'" style="margin-top: 1rem;">
+        <div v-if="settingsForm.method === 'generate'" class="col">
           <label for="system">System</label>
           <textarea id="system" v-model="settingsForm.system" />
         </div>
