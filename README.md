@@ -21,17 +21,22 @@ yarn install
 yarn start
 ```
 
-## Building AppImage
+## Building AppImage and Flatpak on linux
 
 ```bash
-yarn package
-yarn build-appimage
+./build-linux.sh
 ```
 
 ## Running AppImage
 
 ```bash
 ./dist/Free\ Ollama\ Client-0.0.1.AppImage
+```
+
+## Installing Flatpak from file
+
+```bash
+flatpak install -u --bundle ./dist/Free\ Ollama\ Client-0.0.1-x86_64.flatpak
 ```
 
 ## Keyboard shortcuts

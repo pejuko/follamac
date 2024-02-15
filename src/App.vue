@@ -5,7 +5,7 @@
     <div class="central-area">
       <div id="chat" class="chat">
         <div v-for="response in responses" class="row">
-          <img v-if="response.role !== 'user'" src="./images/chatbot.png" width="24px" height="24" style="margin-top: 1rem;" />
+          <img v-if="response.role !== 'user'" src="./images/chatbot.png" class="chatbot" />
           <div :class="[ 'response', response.role ]" v-html="markdownToHtml(response.content)"></div>
         </div>
       </div>
@@ -202,7 +202,7 @@
           statistics.total_eval_tokens += json.eval_count;
 
           responses.value[responses.value.length - 1].content +=
-              `<pre class="system">Total duration: ${humanNumber(nanosecondsToSeconds(json.total_duration))} seconds
+              `\n\n<pre class="system">Total duration: ${humanNumber(nanosecondsToSeconds(json.total_duration))} seconds
 Load duration: ${humanNumber(nanosecondsToSeconds(json.load_duration))} seconds
 Eval duration: ${humanNumber(nanosecondsToSeconds(json.eval_duration))} seconds
 Prompt tokens: ${json.prompt_eval_count}
@@ -337,8 +337,11 @@ Eval tokens: ${part.eval_count}</pre>`;
 
 <style scoped>
   .container {
-    display: flex;
+    box-sizing: border-box;
+    display: grid;
     height: 100vh;
+    grid-template-columns: calc(100% - 250px) 250px;
+    grid-template-rows: 100vh;
   }
 
   .left-panel,
@@ -346,7 +349,6 @@ Eval tokens: ${part.eval_count}</pre>`;
   .right-panel {
     display: flex;
     flex-direction: column;
-    justify-items: stretch;
   }
 
   .left-panel {
@@ -356,9 +358,12 @@ Eval tokens: ${part.eval_count}</pre>`;
   }
 
   .central-area {
-    position: relative;
     background-color: #e0e0e0;
-    width: 75%;
+    padding: 1rem;
+  }
+
+  .right-panel {
+    background-color: #d0d0d0;
     padding: 1rem;
   }
 
@@ -427,30 +432,31 @@ Eval tokens: ${part.eval_count}</pre>`;
     border-radius: 0.5rem;
   }
 
-  .right-panel {
-    background-color: #d0d0d0;
-    width: 25%;
-    padding: 1rem;
-  }
-
   .response {
     margin: 1rem;
     padding: 1.5rem 2rem 1.5rem 2rem;
     word-wrap: anywhere;
-    width: 100%;
   }
 
   .user {
     background: aliceblue;
-    margin-left: 4rem;
+    margin-left: 25%;
+    width: 75%;
+    max-width: 75%;
     border-bottom-left-radius: 0.5rem;
     border-bottom-right-radius: 0.5rem;
     border-top-left-radius: 0.5rem;
   }
 
+  .chatbot {
+    width: 24px;
+    height: 24px;
+    margin-top: 1rem;
+  }
+
   .ollama {
     background: blanchedalmond;
-    margin-right: 4rem;
+    width: calc(75% - 48px - 1rem);
     border-bottom-left-radius: 0.5rem;
     border-bottom-right-radius: 0.5rem;
     border-top-right-radius: 0.5rem;
