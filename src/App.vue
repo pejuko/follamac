@@ -3,10 +3,22 @@
 <!--    <div class="left-panel"></div>-->
 
     <div class="central-area">
+      <div class="row chat-options">
+        <div class="radio">
+          <input id="chat-options--render-markdown" type="radio" v-model="settingsForm.renderAs" value="markdown" />
+          <label for="chat-options--render-markdown">Markdown</label>
+        </div>
+        <div class="radio">
+          <input id="chat-options--render-plaintext" type="radio" v-model="settingsForm.renderAs" value="plaintext" />
+          <label for="chat-options--render-plaintext">Plaintext</label>
+        </div>
+      </div>
+
       <div id="chat" class="chat">
         <div v-for="response in responses" class="row">
           <img v-if="response.role !== 'user'" src="./images/chatbot.png" class="chatbot" />
-          <div :class="[ 'response', response.role ]" v-html="markdownToHtml(response.content)"></div>
+          <div v-if="settingsForm.renderAs === 'markdown'" :class="[ 'response', response.role ]" v-html="markdownToHtml(response.content)"></div>
+          <div v-else :class="[ 'response', response.role ]" v-html="plaintextToHtml(response.content)"></div>
         </div>
       </div>
 
@@ -107,6 +119,7 @@
     context: [],
     method: 'chat',
     pastMessages: [],
+    renderAs: 'markdown',
   });
 
   const statistics = reactive({
@@ -142,13 +155,17 @@
     return number / 1_000_000_000;
   }
 
-  function markdownToHtml(markdown){
+  function markdownToHtml(markdown) {
     return DOMPurify.sanitize(marked.parse(
       markdown.replace(/^[\u200B\u200C\u200D\u200E\u200F\uFEFF]/, ''),
       {
         breaks: true,
       }
     ));
+  }
+
+  function plaintextToHtml(content) {
+    return '<pre style="background: transparent; color: black; white-space: break-spaces">' + DOMPurify.sanitize(content) + '</pre>';
   }
 
   function getOlamaOptions() {
@@ -413,6 +430,18 @@ Eval tokens: ${part.eval_count}</pre>`;
   .statistics {
     margin-top: 0.5rem;
     justify-content: space-evenly;
+  }
+
+  .chat-options {
+    margin-bottom: 0.5rem;
+  }
+
+  .chat-options div {
+    margin-right: 1rem;
+  }
+
+  .chat-options input {
+    margin-right: 0.5rem;
   }
 
   .prompt textarea {
