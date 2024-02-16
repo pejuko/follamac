@@ -31,7 +31,7 @@
       <div class="row statistics">
         <span><b>Time:</b> {{ humanTime(nanosecondsToSeconds(statistics.total_time)) }}</span>
         <span><b>Prompt tokens:</b> {{ statistics.total_prompt_tokens }}</span>
-        <span><b>Server tokens:</b> {{ statistics.total_eval_tokens }}</span>
+        <span><b>Eval tokens:</b> {{ statistics.total_eval_tokens }}</span>
       </div>
     </div>
 
@@ -266,7 +266,7 @@ Eval tokens: ${part.eval_count}</pre>`;
     });
 
     settingsForm.pastMessages = [
-      ...settingsForm.pastMessages,
+      ...messages,
       ...await readOllamaResponse(response, chatElement)
     ];
   }
