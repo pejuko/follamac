@@ -9,6 +9,7 @@
   "scripts": {
     "build-appimage": "electron-builder build --linux appimage",
     "build-flatpak": "electron-builder build --linux flatpak",
+    "build-win-portable": "electron-builder build --win portable",
     "start": "electron-forge start",
     "package": "electron-forge package",
     "make": "electron-forge make",
