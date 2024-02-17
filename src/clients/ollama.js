@@ -51,4 +51,15 @@ export class Ollama {
 
     return await response.json();
   }
+
+  async delete(name) {
+    // make a DELETE request to ollama server
+    const response = await fetch(this.url + '/api/delete', {
+      method: 'DELETE',
+      headers: this.headers,
+      body: JSON.stringify({ name }),
+    });
+
+    return response;
+  }
 }

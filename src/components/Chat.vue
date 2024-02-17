@@ -55,41 +55,51 @@
     </div>
 
     <div class="right-panel">
-      <label>Url</label>
-      <input v-model="chatModel.settingsForm.url" @change="getModels()"/>
+      <div class="col settings">
+        <label>Url</label>
+        <input v-model="chatModel.settingsForm.url" @change="getModels()"/>
 
-      <div v-if="chatModel.errorMessage" class="col error">
-        {{ chatModel.errorMessage }}
-      </div>
-
-      <div v-if="chatModel.models.length > 0" class="col">
-        <label>Model</label>
-        <select v-model="chatModel.settingsForm.model" @change="fetchCurrentModelDetails()">
-          <option v-for="model in chatModel.models">{{ model.name }}</option>
-        </select>
-
-        <div v-if="currentModel" class="model-detail">
-          <i>Family: </i>{{ currentModel.details.family }}<br/>
-          <i>Format: </i>{{ currentModel.details.format }}<br/>
-          <i>Parametr size: </i>{{ currentModel.details.parameter_size }}<br/>
-          <i>Quantization level: </i>{{ currentModel.details.quantization_level }}<br/>
-          <i>Size: </i>{{ humanNumber(currentModel.size / 1024 / 1024) }} MiB<br/>
+        <div v-if="chatModel.errorMessage" class="col error">
+          {{ chatModel.errorMessage }}
         </div>
 
-        <label>Temperature</label>
-        <input v-model="chatModel.settingsForm.temperature"/>
+        <div v-if="chatModel.models.length > 0" class="col">
+          <label>Model</label>
+          <select v-model="chatModel.settingsForm.model" @change="fetchCurrentModelDetails()">
+            <option v-for="model in chatModel.models">{{ model.name }}</option>
+          </select>
 
-        <label>Threads</label>
-        <input v-model="chatModel.settingsForm.num_thread"/>
+          <div v-if="currentModel" class="model-detail">
+            <i>Family: </i>{{ currentModel.details.family }}<br/>
+            <i>Format: </i>{{ currentModel.details.format }}<br/>
+            <i>Parametr size: </i>{{ currentModel.details.parameter_size }}<br/>
+            <i>Quantization level: </i>{{ currentModel.details.quantization_level }}<br/>
+            <i>Size: </i>{{ humanNumber(currentModel.size / 1024 / 1024) }} MiB<br/>
+          </div>
 
-        <div v-if="chatModel.settingsForm.method === 'generate'" class="col">
-          <label>System</label>
-          <textarea v-model="chatModel.settingsForm.system"/>
+          <label>Temperature</label>
+          <input v-model="chatModel.settingsForm.temperature"/>
+
+          <label>Threads</label>
+          <input v-model="chatModel.settingsForm.num_thread"/>
+
+          <div v-if="chatModel.settingsForm.method === 'generate'" class="col">
+            <label>System</label>
+            <textarea v-model="chatModel.settingsForm.system"/>
+          </div>
+        </div>
+
+        <div v-else class="col">
+          <button @click.prevent="getModels()">Reload</button>
         </div>
       </div>
 
-      <div v-else class="col">
-        <button @click.prevent="getModels()">Reload</button>
+      <div class="commands">
+        <button @click.prevent="confirmation = `Really delete current model ${chatModel.settingsForm.model}?`">Delete Current Model</button>
+        <div v-if="confirmation" class="confirmation">
+          {{ confirmation }}
+          <button @click.prevent="deleteCurrentModel()">Confirm</button>
+        </div>
       </div>
     </div>
   </div>
@@ -123,6 +133,7 @@
   const chatModel = defineModel();
 
   const userPrompt = ref('');
+  const confirmation = ref('');
 
   const currentModel = computed(() => {
     return chatModel.value.models.find(m => m.name === chatModel.value.settingsForm.model);
@@ -296,6 +307,13 @@ Eval tokens: ${json.eval_count}</pre>`;
     try {
       const list = await getOllama().list();
       chatModel.value.models = list.models;
+      if (!currentModel.value) {
+        if (chatModel.value.models.length > 0) {
+          chatModel.value.settingsForm.model = chatModel.value.models[0].name;
+        } else {
+          chatModel.value.settingsForm.model = null;
+        }
+      }
       await fetchCurrentModelDetails();
       chatModel.value.errorMessage = null;
     } catch (e) {
@@ -310,6 +328,19 @@ Eval tokens: ${json.eval_count}</pre>`;
     if (chatModel.value.currentModelDetail.system) {
       chatModel.value.settingsForm.system = chatModel.value.currentModelDetail.system;
     }
+  }
+
+  async function deleteCurrentModel() {
+    if (currentModel.value) {
+      const response = await getOllama().delete(currentModel.value.name);
+      if (response.ok) {
+        await getModels();
+        chatModel.value.errorMessage = 'Model deleted.';
+      } else {
+        chatModel.value.errorMessage = 'Cannot delete model ' + currentModel.value.name;
+      }
+    }
+    confirmation.value = null;
   }
 
   onMounted(() => {
@@ -410,6 +441,10 @@ Eval tokens: ${json.eval_count}</pre>`;
     height: 5rem;
     padding: 0.5rem;
     margin-right: 1rem;
+  }
+
+  .settings {
+    flex-grow: 2;
   }
 
   button {
