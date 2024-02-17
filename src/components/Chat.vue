@@ -31,14 +31,14 @@
         <div class="col">
           <button type="submit" @click.prevent="submitPrompt">Submit</button>
 
-          <div class="row radio">
+          <div class="row">
             <label>
               <input type="radio" v-model="chatModel.settingsForm.method" value="chat" />
               Chat
             </label>
           </div>
 
-          <div class="row radio">
+          <div class="row">
             <label>
               <input type="radio" v-model="chatModel.settingsForm.method" value="generate" />
               Generate
@@ -452,16 +452,7 @@ Eval tokens: ${json.eval_count}</pre>`;
   }
 
   label {
-    margin-top: 1rem;
-  }
-
-  label.radio {
-    margin: 0;
-    margin-left: 1rem;
-  }
-
-  .row.radio {
-    margin-top: 0.5rem;
+    margin-top: 0.75rem;
   }
 
   button:hover {
