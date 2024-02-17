@@ -111,7 +111,7 @@
 </template>
 
 <script setup>
-  import { ref, reactive, onMounted, computed, watch } from 'vue';
+  import { ref, onMounted, computed } from 'vue';
   import { Marked } from "marked";
   import DOMPurify from 'dompurify';
   import { markedHighlight } from "marked-highlight";

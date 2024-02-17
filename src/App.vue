@@ -3,15 +3,24 @@
     <div class="col left-panel">
       <button v-for="(chat, idx) in chats" @click.prevent="switchChat(idx)" :class="{ active: idx === currentChatId }">{{ chat.name }}</button>
       <button @click.prevent="addChat()"> + </button>
+      <br />
+      <button @click.prevent="saveAll()" class="save-all">Save All</button>
+      <br />
+      <button @click.prevent="clearAll()" class="clear-all">Clear All</button>
     </div>
 
     <Chat v-for="(chat, idx) in chats" :key="idx" v-model="chat.chat" :class="{ hidden: idx !== currentChatId }" :currentChatId="idx" />
   </div>
+
+  <Notivue v-slot="item">
+    <Notification :item="item" />
+  </Notivue>
 </template>
 
 <script setup>
   import { onMounted, ref } from "vue";
   import Chat from "@/components/Chat.vue";
+  import { Notivue, Notification, push } from 'notivue';
 
   const chats = ref([]);
   const currentChatId = ref(-1);
@@ -59,7 +68,31 @@
     currentChatId.value = id;
   }
 
+  function saveAll() {
+    const data = JSON.stringify(chats.value);
+    localStorage.setItem('chats', data);
+    push.success('All was saved.');
+  }
+
+  function restoreAll() {
+    let data = localStorage.getItem('chats');
+    if (data) {
+      chats.value = JSON.parse(data);
+      if (chats.value.length > 0) {
+        currentChatId.value = 0;
+      }
+    }
+  }
+
+  function clearAll() {
+    currentChatId.value = -1;
+    chats.value = [];
+    addChat();
+    localStorage.removeItem('chats');
+  }
+
   onMounted(() => {
+    restoreAll();
     if (chats.value.length <= 0) {
       addChat();
     }
@@ -103,5 +136,13 @@
 
   .hidden {
     display: none;
+  }
+
+  .save-all {
+    background: aqua;
+  }
+
+  .clear-all {
+    background: crimson;
   }
 </style>

@@ -44,6 +44,7 @@
     "highlight.js": "^11.9.0",
     "marked": "^12.0.0",
     "marked-highlight": "^2.1.1",
+    "notivue": "^2.2.1",
     "vue": "^3.4.18"
   },
   "build": {

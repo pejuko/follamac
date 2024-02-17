@@ -3079,6 +3079,11 @@ normalize-url@^6.0.1:
   resolved "https://registry.npmjs.org/normalize-url/-/normalize-url-6.1.0.tgz"
   integrity sha512-DlL+XwOy3NxAQ8xuC0okPgK46iuVNAK01YN7RueYBqqFeGsBjV9XmCAzAdgt+667bCl5kPh9EqKKDwnaPG1I7A==
 
+notivue@^2.2.1:
+  version "2.2.1"
+  resolved "https://registry.yarnpkg.com/notivue/-/notivue-2.2.1.tgz#1fc3331ae3093c44ca247f5a4ec7097a3501b61e"
+  integrity sha512-PO9ADaMUmJGF06KPbj9AFbo0YidFR350kahp4vrF0Q6ZFZThvM4hfikfa9Di6Ee0yqCoT5JU8xNR2rdX5ibhJA==
+
 npm-run-path@^2.0.0:
   version "2.0.2"
   resolved "https://registry.npmjs.org/npm-run-path/-/npm-run-path-2.0.2.tgz"

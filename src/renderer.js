@@ -27,6 +27,16 @@
  */
 
 import { createApp } from 'vue';
+
+import { createNotivue } from 'notivue'
+import 'notivue/notifications.css' // Only needed if using built-in notifications
+import 'notivue/animations.css' // Only needed if using built-in animations
+
 import App from './App.vue';
 
-createApp(App).mount('#app');
+const app = createApp(App);
+const notivue = createNotivue(/* options */)
+
+app.use(notivue);
+
+app.mount('#app');
