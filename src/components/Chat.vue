@@ -40,7 +40,7 @@
 
           <div class="row radio">
             <label>
-              <input type="radio" v-model="chatModel.settingsForm.method" value="generate"/>
+              <input type="radio" v-model="chatModel.settingsForm.method" value="generate" />
               Generate
             </label>
           </div>
@@ -57,7 +57,7 @@
     <div class="right-panel">
       <div class="col settings">
         <label>Url</label>
-        <input v-model="chatModel.settingsForm.url" @change="getModels()"/>
+        <input v-model="chatModel.settingsForm.url" @change="getModels()" />
 
         <div v-if="chatModel.errorMessage" class="col error">
           {{ chatModel.errorMessage }}
@@ -78,14 +78,14 @@
           </div>
 
           <label>Temperature</label>
-          <input v-model="chatModel.settingsForm.temperature"/>
+          <input v-model="chatModel.settingsForm.temperature" />
 
           <label>Threads</label>
-          <input v-model="chatModel.settingsForm.num_thread"/>
+          <input v-model="chatModel.settingsForm.num_thread" />
 
           <div v-if="chatModel.settingsForm.method === 'generate'" class="col">
             <label>System</label>
-            <textarea v-model="chatModel.settingsForm.system"/>
+            <textarea v-model="chatModel.settingsForm.system" />
           </div>
         </div>
 
@@ -94,12 +94,17 @@
         </div>
       </div>
 
-      <div class="commands">
-        <button @click.prevent="confirmation = `Really delete current model ${chatModel.settingsForm.model}?`">Delete Current Model</button>
-        <div v-if="confirmation" class="confirmation">
-          {{ confirmation }}
+      <div class="col commands">
+        <label>Model name to pull</label>
+        <input v-model="pullModelName" />
+        <button @click="pullModel()">Pull</button>
+
+        <div v-if="confirmation" class="col confirmation">
+          <div>{{ confirmation }}</div>
+          <button @click.prevent="confirmation = null">Cancel</button>
           <button @click.prevent="deleteCurrentModel()">Confirm</button>
         </div>
+        <button @click.prevent="confirmation = `Really delete current model ${chatModel.settingsForm.model}?`" style="margin-top: 1rem;">Delete Current Model</button>
       </div>
     </div>
   </div>
@@ -134,6 +139,7 @@
 
   const userPrompt = ref('');
   const confirmation = ref('');
+  const pullModelName = ref('');
 
   const currentModel = computed(() => {
     return chatModel.value.models.find(m => m.name === chatModel.value.settingsForm.model);
@@ -180,8 +186,47 @@
     return document.getElementById('chat-' + props.currentChatId);
   }
 
+  function handleChatChunks(chunks) {
+    let messages = [];
+    let chunk = null;
+    let message = ''
+    let json = null;
+    // compile the message
+    for (chunk of chunks) {
+      json = JSON.parse(chunk);
+      message += json.message ? json.message.content : json.response;
+    }
+
+    // update last entry in the response array
+    chatModel.value.responses[chatModel.value.responses.length - 1].content = message;
+
+    // if ollama has nothing more to say, show statistics
+    if (json.done === true) {
+      if (json.message) {
+        messages = [{role: json.message.role, content: message}];
+      }
+
+      if (json.context) {
+        chatModel.value.settingsForm.context = json.context;
+      }
+
+      chatModel.value.statistics.total_time += json.total_duration;
+      chatModel.value.statistics.total_prompt_tokens += json.prompt_eval_count;
+      chatModel.value.statistics.total_eval_tokens += json.eval_count;
+
+      chatModel.value.responses[chatModel.value.responses.length - 1].content +=
+          `\n\n<pre class="system">Total duration: ${humanNumber(nanosecondsToSeconds(json.total_duration))} seconds
+Load duration: ${humanNumber(nanosecondsToSeconds(json.load_duration))} seconds
+Eval duration: ${humanNumber(nanosecondsToSeconds(json.eval_duration))} seconds
+Prompt tokens: ${json.prompt_eval_count}
+Eval tokens: ${json.eval_count}</pre>`;
+    }
+
+    return messages;
+  }
+
   // read Ollama's stream response
-  async function readOllamaResponse(response, chatElement) {
+  async function readOllamaResponse(response, chatElement, handleChunksCallback) {
     // get the reader and read the available data received from the server in a loop
     const reader = await response.body.getReader();
     let value = await reader.read();
@@ -194,41 +239,8 @@
       // split received data by new line delimiter and filter out non empty chunks
       const regex = /\n/;
       let chunks = total_text.split(regex).filter(c => c && c !== '');
-      let chunk = null;
-      let message = ''
-      messages = [];
       try {
-        let json = null;
-        // compile the message
-        for (chunk of chunks) {
-          json = JSON.parse(chunk);
-          message += json.message ? json.message.content : json.response;
-        }
-
-        // update last entry in the response array
-        chatModel.value.responses[chatModel.value.responses.length - 1].content = message;
-
-        // if ollama has nothing more to say, show statistics
-        if (json.done === true) {
-          if (json.message) {
-            messages = [{role: json.message.role, content: message}];
-          }
-
-          if (json.context) {
-            chatModel.value.settingsForm.context = json.context;
-          }
-
-          chatModel.value.statistics.total_time += json.total_duration;
-          chatModel.value.statistics.total_prompt_tokens += json.prompt_eval_count;
-          chatModel.value.statistics.total_eval_tokens += json.eval_count;
-
-          chatModel.value.responses[chatModel.value.responses.length - 1].content +=
-              `\n\n<pre class="system">Total duration: ${humanNumber(nanosecondsToSeconds(json.total_duration))} seconds
-Load duration: ${humanNumber(nanosecondsToSeconds(json.load_duration))} seconds
-Eval duration: ${humanNumber(nanosecondsToSeconds(json.eval_duration))} seconds
-Prompt tokens: ${json.prompt_eval_count}
-Eval tokens: ${json.eval_count}</pre>`;
-        }
+        messages = handleChunksCallback(chunks);
         chatElement.scrollTo(0, chatElement.scrollHeight);
       } catch (e) {
         console.log(e);
@@ -260,7 +272,7 @@ Eval tokens: ${json.eval_count}</pre>`;
 
     chatModel.value.settingsForm.pastMessages = [
       ...messages,
-      ...await readOllamaResponse(response, chatElement),
+      ...await readOllamaResponse(response, chatElement, handleChatChunks),
     ];
   }
 
@@ -280,7 +292,7 @@ Eval tokens: ${json.eval_count}</pre>`;
       options: getOlamaOptions()
     });
 
-    await readOllamaResponse(response, chatElement);
+    await readOllamaResponse(response, chatElement, handleChatChunks);
   }
 
   // Submit the prompt to the server and continuously update the chat
@@ -341,6 +353,57 @@ Eval tokens: ${json.eval_count}</pre>`;
       }
     }
     confirmation.value = null;
+  }
+
+  async function handlePullChunks(chunks) {
+    const lastChunk = JSON.parse(chunks[chunks.length - 1]);
+
+    if (lastChunk.error) {
+      chatModel.value.responses[chatModel.value.responses.length - 1].content = lastChunk.error;
+      return;
+    }
+
+    let message = lastChunk.status;
+
+    if (lastChunk.total) {
+      const completed = lastChunk.completed ?? 0;
+      const percent = Math.floor((completed / lastChunk.total) * 100);
+      message += `: ${percent}%`;
+    }
+
+    if (lastChunk.status === 'success') {
+      message = 'Pull finished with success.';
+    }
+
+    if (message) {
+      chatModel.value.responses[chatModel.value.responses.length - 1].content = message;
+    }
+  }
+
+  async function pullModel() {
+    if (pullModelName.value.trim() === '') {
+      chatModel.value.errorMessage = 'Model name to pull is empty.';
+      return;
+    }
+
+    const response = await getOllama().pull(pullModelName.value);
+    if (!response.ok) {
+      chatModel.value.errorMessage = 'Cannot start pull.';
+      return;
+    }
+    pullModelName.value = '';
+    chatModel.value.errorMessage = null;
+
+    // push message to chat as user
+    const message = {role: 'ollama', content: 'Pull has started...'};
+    chatModel.value.responses.push(message);
+
+    // scroll down the chat, so the user prompt is visible
+    const chatElement = getChatElement();
+    chatElement.scrollTo(0, chatElement.scrollHeight);
+
+    await readOllamaResponse(response, chatElement, handlePullChunks);
+    getModels();
   }
 
   onMounted(() => {

@@ -62,4 +62,15 @@ export class Ollama {
 
     return response;
   }
+
+  async pull(name) {
+    // make a POST request to ollama server
+    const response = await fetch(this.url + '/api/pull', {
+      method: 'POST',
+      headers: this.headers,
+      body: JSON.stringify({ name }),
+    });
+
+    return response;
+  }
 }
