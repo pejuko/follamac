@@ -21,10 +21,10 @@ yarn install
 yarn start
 ```
 
-## Building AppImage and Flatpak on linux
+## Building AppImage on Linux
 
 ```bash
-./build-linux.sh
+./build-appimage.sh
 ```
 
 ## Running AppImage
@@ -33,10 +33,28 @@ yarn start
 ./dist/Free\ Ollama\ Client-0.0.1.AppImage
 ```
 
+## Building Flatpak on Linux
+
+```bash
+./build-flatpak.sh
+```
+
 ## Installing Flatpak from file
 
 ```bash
 flatpak install -u --bundle ./dist/Free\ Ollama\ Client-0.0.1-x86_64.flatpak
+```
+
+## Building Windows exe on Linux
+
+```bash
+./build-win-portable.sh
+```
+
+## Building Windows exe on Windows
+
+```shell
+.\build-windows.bat
 ```
 
 ## Keyboard shortcuts
