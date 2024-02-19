@@ -59,11 +59,7 @@
         <label>Url</label>
         <input v-model="chatModel.settingsForm.url" @change="getModels()" />
 
-        <div v-if="chatModel.errorMessage" class="col error">
-          {{ chatModel.errorMessage }}
-        </div>
-
-        <div v-if="chatModel.models.length > 0" class="col">
+        <div v-if="currentModel" class="col">
           <label>Model</label>
           <select v-model="chatModel.settingsForm.model" @change="fetchCurrentModelDetails()">
             <option v-for="model in chatModel.models">{{ model.name }}</option>
@@ -94,7 +90,7 @@
         </div>
       </div>
 
-      <div class="col commands">
+      <div v-if="currentModel" class="col commands">
         <label>Model name to pull</label>
         <input v-model="pullModelName" />
         <button @click="pullModel()">Pull</button>
@@ -116,6 +112,7 @@
   import DOMPurify from 'dompurify';
   import { markedHighlight } from "marked-highlight";
   import hljs from 'highlight.js';
+  import { push } from 'notivue';
   import { Ollama } from '@/clients/ollama';
 
   const marked = new Marked(
@@ -327,10 +324,9 @@ Eval tokens: ${json.eval_count}</pre>`;
         }
       }
       await fetchCurrentModelDetails();
-      chatModel.value.errorMessage = null;
     } catch (e) {
       console.log(e);
-      errorMessage.value = 'There is connection problem.';
+      push.error('There is connection problem.');
     }
   }
 
@@ -347,9 +343,9 @@ Eval tokens: ${json.eval_count}</pre>`;
       const response = await getOllama().delete(currentModel.value.name);
       if (response.ok) {
         await getModels();
-        chatModel.value.errorMessage = 'Model deleted.';
+        push.success('Model deleted.');
       } else {
-        chatModel.value.errorMessage = 'Cannot delete model ' + currentModel.value.name;
+        push.error('Cannot delete model ' + currentModel.value.name);
       }
     }
     confirmation.value = null;
@@ -382,17 +378,16 @@ Eval tokens: ${json.eval_count}</pre>`;
 
   async function pullModel() {
     if (pullModelName.value.trim() === '') {
-      chatModel.value.errorMessage = 'Model name to pull is empty.';
+      push.error('Model name to pull is empty.');
       return;
     }
 
     const response = await getOllama().pull(pullModelName.value);
     if (!response.ok) {
-      chatModel.value.errorMessage = 'Cannot start pull.';
+      push.error('Cannot start pull.');
       return;
     }
     pullModelName.value = '';
-    chatModel.value.errorMessage = null;
 
     // push message to chat as user
     const message = {role: 'ollama', content: 'Pull has started...'};

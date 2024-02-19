@@ -35,7 +35,13 @@ import 'notivue/animations.css' // Only needed if using built-in animations
 import App from './App.vue';
 
 const app = createApp(App);
-const notivue = createNotivue(/* options */)
+const notivue = createNotivue({
+  notifications: {
+    global: {
+      duration: Infinity,
+    },
+  },
+});
 
 app.use(notivue);
 

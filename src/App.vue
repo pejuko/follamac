@@ -47,7 +47,6 @@
     models: [],
     responses: [],
     currentModelDetail: {},
-    errorMessage: null,
   };
 
   function getNewChat() {
