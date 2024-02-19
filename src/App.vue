@@ -1,16 +1,34 @@
 <template>
-  <div class="main-container">
-    <div class="col left-panel">
-      <button v-for="(chat, idx) in chats" @click.prevent="switchChat(idx)" :class="{ active: idx === currentChatId }">{{ chat.name }}</button>
-      <button @click.prevent="addChat()"> + </button>
-      <br />
-      <button @click.prevent="saveAll()" class="save-all">Save All</button>
-      <br />
-      <button @click.prevent="clearAll()" class="clear-all">Clear All</button>
-    </div>
+  <v-card height="100vh" width="100vw">
+    <v-layout>
+      <v-navigation-drawer floating permanent width="150px">
+        <v-tabs
+            v-model="currentChatId"
+            direction="vertical"
+            style="width: 100%;"
+            selected-class="active"
+            grow
+        >
+          <v-tab v-for="(chat, idx) in chats"
+                 :value="idx"
+          >{{ chat.name }}</v-tab>
+        </v-tabs>
 
-    <Chat v-for="(chat, idx) in chats" :key="idx" v-model="chat.chat" :class="{ hidden: idx !== currentChatId }" :currentChatId="idx" />
-  </div>
+        <br />
+        <v-col class="d-flex flex-column">
+          <v-btn @click.prevent="addChat()">Add Chat</v-btn>
+          <br />
+          <v-btn @click.prevent="saveAll()">Save All</v-btn>
+          <br />
+          <v-btn @click.prevent="clearAll()" color="red-darken-4">Clear All</v-btn>
+        </v-col>
+      </v-navigation-drawer>
+
+      <v-main>
+        <Chat v-for="(chat, idx) in chats" :key="idx" v-model="chat.chat" :class="{ hidden: idx !== currentChatId }" :currentChatId="idx" />
+      </v-main>
+    </v-layout>
+  </v-card>
 
   <Notivue v-slot="item">
     <Notification :item="item" />
@@ -99,49 +117,19 @@
 </script>
 
 <style scoped>
-  .main-container {
-    box-sizing: border-box;
-    display: grid;
-    height: 100vh;
-    grid-template-columns: 100px calc(100% - 100px);
-    grid-template-rows: 100vh;
-  }
-
-  .left-panel {
-    display: flex;
-    flex-direction: column;
-    background-color: #f0f0f0;
-    padding: 1rem;
-    padding-right: 0;
-  }
-
-  button:hover {
-    cursor: pointer;
-  }
-
-  button {
-    height: 2rem;
-    padding: 0.5rem;
-    width: 100%;
-    border: 1px solid black;
-    border-right: 0;
-    border-top-left-radius: 0.5rem;
-    border-bottom-left-radius: 0.5rem;
-  }
-
-  button.active {
-    background-color: #e0e0e0;
-  }
-
   .hidden {
     display: none;
   }
 
-  .save-all {
-    background: aqua;
+  .active {
+    background-color: #efefef;
   }
 
-  .clear-all {
-    background: crimson;
+  .tab {
+    padding: 0.5rem;
+  }
+
+  .tab.warning {
+    background-color: #c06718;
   }
 </style>

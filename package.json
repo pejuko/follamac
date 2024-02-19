@@ -34,9 +34,11 @@
     "@electron-forge/maker-zip": "^7.2.0",
     "@electron-forge/plugin-auto-unpack-natives": "^7.2.0",
     "@electron-forge/plugin-vite": "^7.2.0",
+    "@mdi/font": "^7.4.47",
     "@vitejs/plugin-vue": "^5.0.4",
     "electron": "28.2.3",
-    "electron-builder": "^24.9.1"
+    "electron-builder": "^24.9.1",
+    "sass": "^1.71.0"
   },
   "dependencies": {
     "dompurify": "^3.0.8",
@@ -45,7 +47,9 @@
     "marked": "^12.0.0",
     "marked-highlight": "^2.1.1",
     "notivue": "^2.2.1",
-    "vue": "^3.4.18"
+    "vite-plugin-vuetify": "^2.0.1",
+    "vue": "^3.4.18",
+    "vuetify": "^3.5.4"
   },
   "build": {
     "appId": "com.github.pejuko.follamac",

@@ -1,109 +1,148 @@
 <template>
-  <div class="container">
-    <div class="central-area">
-      <div class="row chat-options">
-        <div class="radio">
-          <label>
-            <input type="radio" v-model="chatModel.settingsForm.renderAs" value="markdown" />
-            Markdown
-          </label>
-        </div>
-        <div class="radio">
-          <label>
-            <input type="radio" v-model="chatModel.settingsForm.renderAs" value="plaintext" />
-            Plaintext
-          </label>
-        </div>
-      </div>
+  <v-card height="100vh">
+    <v-layout class="h-screen">
+      <v-navigation-drawer floating permanent location="right" class="pa-3" style="width: 250px;">
+        <v-container class="d-flex flex-column flex-grow-1 pl-1 h-100">
+          <v-row>
+            <v-col>
+              <v-text-field v-model="chatModel.settingsForm.url"
+                            label="Url"
+                            variant="outlined"
+                            @change="getModels()"
+              />
 
-      <div :id="`chat-${currentChatId}`" class="chat">
-        <div v-for="response in chatModel.responses" class="row">
-          <img v-if="response.role !== 'user'" src="../images/chatbot.png" class="chatbot"/>
-          <div v-if="chatModel.settingsForm.renderAs === 'markdown'" :class="[ 'response', response.role ]"
-               v-html="markdownToHtml(response.content)"></div>
-          <div v-else :class="[ 'response', response.role ]" v-html="plaintextToHtml(response.content)"></div>
-        </div>
-      </div>
+              <div v-if="currentModel">
+                <v-select v-model="chatModel.settingsForm.model"
+                          :items="chatModel.models"
+                          item-title="name"
+                          item-value="name"
+                          variant="outlined"
+                          @change="fetchCurrentModelDetails()"
+                ></v-select>
 
-      <div class="row prompt">
-        <textarea v-model="userPrompt" placeholder="Enter your prompt..." />
+                <div>
+                  <i>Family: </i>{{ currentModel.details.family }}<br />
+                  <i>Format: </i>{{ currentModel.details.format }}<br />
+                  <i>Parametr size: </i>{{ currentModel.details.parameter_size }}<br />
+                  <i>Quantization level: </i>{{ currentModel.details.quantization_level }}<br />
+                  <i>Size: </i>{{ humanNumber(currentModel.size / 1024 / 1024) }} MiB<br />
+                </div>
+                <br />
 
-        <div class="col">
-          <button type="submit" @click.prevent="submitPrompt">Submit</button>
+                <v-text-field v-model="chatModel.settingsForm.temperature"
+                              label="Temperature"
+                              variant="outlined"
+                ></v-text-field>
 
-          <div class="row">
-            <label>
-              <input type="radio" v-model="chatModel.settingsForm.method" value="chat" />
-              Chat
-            </label>
-          </div>
+                <v-text-field v-model="chatModel.settingsForm.num_thread"
+                              label="Threads"
+                              variant="outlined"
+                ></v-text-field>
 
-          <div class="row">
-            <label>
-              <input type="radio" v-model="chatModel.settingsForm.method" value="generate" />
-              Generate
-            </label>
-          </div>
-        </div>
-      </div>
+                <v-text-field v-if="chatModel.settingsForm.method === 'generate'"
+                              v-model="chatModel.settingsForm.system"
+                              label="System message"
+                              variant="outlined"
+                ></v-text-field>
+              </div>
 
-      <div class="row statistics">
-        <span><b>Time:</b> {{ humanTime(nanosecondsToSeconds(chatModel.statistics.total_time)) }}</span>
-        <span><b>Prompt tokens:</b> {{ chatModel.statistics.total_prompt_tokens }}</span>
-        <span><b>Eval tokens:</b> {{ chatModel.statistics.total_eval_tokens }}</span>
-      </div>
-    </div>
+              <div v-else class="col">
+                <v-btn @click.prevent="getModels()">Reload</v-btn>
+              </div>
+            </v-col>
+          </v-row>
 
-    <div class="right-panel">
-      <div class="col settings">
-        <label>Url</label>
-        <input v-model="chatModel.settingsForm.url" @change="getModels()" />
+          <v-spacer />
 
-        <div v-if="currentModel" class="col">
-          <label>Model</label>
-          <select v-model="chatModel.settingsForm.model" @change="fetchCurrentModelDetails()">
-            <option v-for="model in chatModel.models">{{ model.name }}</option>
-          </select>
+          <v-row v-if="currentModel" class="d-flex flex-column flex-grow-0 commands">
+            <v-col>
+              <v-text-field v-model="pullModelName"
+                            label="Model name to pull"
+                            variant="outlined"
+              ></v-text-field>
+              <v-btn @click.prevent="pullModel()" class="mb-3">Pull</v-btn>
 
-          <div v-if="currentModel" class="model-detail">
-            <i>Family: </i>{{ currentModel.details.family }}<br/>
-            <i>Format: </i>{{ currentModel.details.format }}<br/>
-            <i>Parametr size: </i>{{ currentModel.details.parameter_size }}<br/>
-            <i>Quantization level: </i>{{ currentModel.details.quantization_level }}<br/>
-            <i>Size: </i>{{ humanNumber(currentModel.size / 1024 / 1024) }} MiB<br/>
-          </div>
+              <v-dialog transition="dialog-top-transition"
+                        v-model="confirmation"
+              >
+                <template v-slot:activator="{ props }">
+                  <v-btn v-bind="props">Delete Model</v-btn>
+                </template>
+                <template v-slot:default="{ isActive }">
+                  <v-card>
+                    <v-toolbar
+                        color="primary"
+                        title="Delete current model"
+                    ></v-toolbar>
+                    <v-card-text>
+                      <div class="text-h5 pa-12">Really delete current model "{{ chatModel.settingsForm.model }}"?</div>
+                    </v-card-text>
+                    <v-card-actions class="justify-end">
+                      <v-btn @click="confirmation = false">Cancel</v-btn>
+                      <v-btn @click="deleteCurrentModel()">Delete</v-btn>
+                    </v-card-actions>
+                  </v-card>
+                </template>
+              </v-dialog>
+            </v-col>
+          </v-row>
+        </v-container>
 
-          <label>Temperature</label>
-          <input v-model="chatModel.settingsForm.temperature" />
+      </v-navigation-drawer>
 
-          <label>Threads</label>
-          <input v-model="chatModel.settingsForm.num_thread" />
+      <v-main class="d-flex flex-column flex-grow-1 pa-1 h-screen position-absolute"
+              style="left: 150px; right: 250px; top: 0; bottom: 0;">
+        <v-radio-group v-model="chatModel.settingsForm.renderAs" inline class="d-flex flex-row flex-grow-0">
+          <v-radio value="markdown" label="Markdown" />
+          <v-radio value="plaintext" label="Plaintext" />
+        </v-radio-group>
 
-          <div v-if="chatModel.settingsForm.method === 'generate'" class="col">
-            <label>System</label>
-            <textarea v-model="chatModel.settingsForm.system" />
-          </div>
-        </div>
+        <v-card class="d-flex flex-column flex-grow-1 pa-2">
+          <v-card :id="`chat-${currentChatId}`"
+                  variant="outlined"
+                  class="d-flex flex-column flex-grow-1 mb-3 chat">
+            <v-container>
+              <v-row v-for="response in chatModel.responses">
+                <v-col cols="1">
+                  <img v-if="response.role !== 'user'" src="../images/chatbot.png" class="chatbot" />
+                </v-col>
+                <v-col v-if="chatModel.settingsForm.renderAs === 'markdown'" :class="[ 'response', response.role ]"
+                       v-html="markdownToHtml(response.content)"></v-col>
+                <v-col v-else :class="[ 'response', response.role ]"
+                       v-html="plaintextToHtml(response.content)"></v-col>
+              </v-row>
+            </v-container>
+          </v-card>
 
-        <div v-else class="col">
-          <button @click.prevent="getModels()">Reload</button>
-        </div>
-      </div>
+          <v-row class="d-flex flex-row flex-grow-0 prompt">
+            <v-col class="d-flex flex-column flex-grow-1">
+              <v-textarea v-model="userPrompt"
+                          placeholder="Enter your prompt..."
+                          variant="outlined"
+                          auto-grow
+              />
+            </v-col>
 
-      <div v-if="currentModel" class="col commands">
-        <label>Model name to pull</label>
-        <input v-model="pullModelName" />
-        <button @click="pullModel()">Pull</button>
+            <v-col class="d-flex flex-column flex-grow-0">
+              <v-btn @click.prevent="submitPrompt" color="blue-darken-2">Submit</v-btn>
 
-        <div v-if="confirmation" class="col confirmation">
-          <div>{{ confirmation }}</div>
-          <button @click.prevent="confirmation = null">Cancel</button>
-          <button @click.prevent="deleteCurrentModel()">Confirm</button>
-        </div>
-        <button @click.prevent="confirmation = `Really delete current model ${chatModel.settingsForm.model}?`" style="margin-top: 1rem;">Delete Current Model</button>
-      </div>
-    </div>
-  </div>
+              <v-radio-group v-model="chatModel.settingsForm.method" style="width: 125px;">
+                <v-radio value="chat" label="Chat" />
+                <v-radio value="generate" label="Generate" />
+              </v-radio-group>
+            </v-col>
+          </v-row>
+        </v-card>
+
+        <v-row class="d-flex flex-row flex-grow-0">
+          <v-col class="text-center"><b>Time:</b> {{ humanTime(nanosecondsToSeconds(chatModel.statistics.total_time)) }}
+          </v-col>
+          <v-col class="text-center"><b>Prompt tokens:</b> {{ chatModel.statistics.total_prompt_tokens }}</v-col>
+          <v-col class="text-center"><b>Eval tokens:</b> {{ chatModel.statistics.total_eval_tokens }}</v-col>
+        </v-row>
+      </v-main>
+    </v-layout>
+  </v-card>
 </template>
 
 <script setup>
@@ -135,7 +174,7 @@
   const chatModel = defineModel();
 
   const userPrompt = ref('');
-  const confirmation = ref('');
+  const confirmation = ref(false);
   const pullModelName = ref('');
 
   const currentModel = computed(() => {
@@ -339,6 +378,7 @@ Eval tokens: ${json.eval_count}</pre>`;
   }
 
   async function deleteCurrentModel() {
+    confirmation.value = false;
     if (currentModel.value) {
       const response = await getOllama().delete(currentModel.value.name);
       if (response.ok) {
@@ -348,7 +388,7 @@ Eval tokens: ${json.eval_count}</pre>`;
         push.error('Cannot delete model ' + currentModel.value.name);
       }
     }
-    confirmation.value = null;
+    confirmation.value = false;
   }
 
   async function handlePullChunks(chunks) {
@@ -407,100 +447,10 @@ Eval tokens: ${json.eval_count}</pre>`;
 </script>
 
 <style scoped>
-  .container {
-    box-sizing: border-box;
-    display: grid;
-    height: 100vh;
-    grid-template-columns: calc(100% - 250px) 250px;
-    grid-template-rows: 100vh;
-  }
-
-  .central-area,
-  .right-panel {
-    display: flex;
-    flex-direction: column;
-  }
-
-  .central-area {
-    background-color: #e0e0e0;
-    padding: 1rem;
-  }
-
-  .right-panel {
-    background-color: #d0d0d0;
-    padding: 1rem;
-  }
-
   .chat {
-    display: flex;
-    flex-direction: column;
-    flex-grow: 2;
-    margin-bottom: 1rem;
-    border: 1px solid black;
-    border-radius: 0.5rem;
-    padding: 0.5rem;
+    width: 100%;
+    height: 100%;
     overflow-y: auto;
-  }
-
-  .right-panel input, .right-panel select, .right-panel textarea {
-    padding: 0.5rem;
-  }
-
-  label {
-    margin-top: 0.75rem;
-  }
-
-  button:hover {
-    background: #d0d0d0;
-    cursor: pointer;
-  }
-
-  .row {
-    display: flex;
-    flex-direction: row;
-  }
-
-  .col {
-    display: flex;
-    flex-direction: column;
-  }
-
-  .statistics {
-    margin-top: 0.5rem;
-    justify-content: space-evenly;
-  }
-
-  .chat-options {
-    margin-bottom: 0.5rem;
-  }
-
-  .chat-options div {
-    margin-right: 1rem;
-  }
-
-  .chat-options input {
-    margin-right: 0.5rem;
-  }
-
-  .prompt textarea {
-    display: flex;
-    flex-grow: 2;
-    border: 1px solid black;
-    border-radius: 0.5rem;
-    height: 5rem;
-    padding: 0.5rem;
-    margin-right: 1rem;
-  }
-
-  .settings {
-    flex-grow: 2;
-  }
-
-  button {
-    height: 2rem;
-    padding: 0.5rem;
-    border: 1px solid black;
-    border-radius: 0.5rem;
   }
 
   .response {
@@ -522,6 +472,7 @@ Eval tokens: ${json.eval_count}</pre>`;
   .chatbot {
     width: 24px;
     height: 24px;
+    margin: 0;
     margin-top: 1rem;
   }
 
@@ -531,15 +482,6 @@ Eval tokens: ${json.eval_count}</pre>`;
     border-bottom-left-radius: 0.5rem;
     border-bottom-right-radius: 0.5rem;
     border-top-right-radius: 0.5rem;
-  }
-
-  .model-detail {
-    margin-top: 1rem;
-  }
-
-  .error {
-    color: red;
-    font-weight: bold;
   }
 </style>
 
@@ -553,11 +495,6 @@ Eval tokens: ${json.eval_count}</pre>`;
 
   code {
     padding: 0 0.5rem 0 0.5rem;
-  }
-
-  .system {
-    background: brown;
-    border-radius: 0.5rem;
   }
 
   pre {

@@ -28,6 +28,10 @@
 
 import { createApp } from 'vue';
 
+import '@mdi/font/css/materialdesignicons.css'
+import 'vuetify/styles'
+import { createVuetify } from 'vuetify'
+
 import { createNotivue } from 'notivue'
 import 'notivue/notifications.css' // Only needed if using built-in notifications
 import 'notivue/animations.css' // Only needed if using built-in animations
@@ -35,6 +39,10 @@ import 'notivue/animations.css' // Only needed if using built-in animations
 import App from './App.vue';
 
 const app = createApp(App);
+
+const vuetify = createVuetify();
+app.use(vuetify);
+
 const notivue = createNotivue({
   notifications: {
     global: {
@@ -42,7 +50,6 @@ const notivue = createNotivue({
     },
   },
 });
-
 app.use(notivue);
 
 app.mount('#app');
