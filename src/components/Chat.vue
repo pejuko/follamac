@@ -103,8 +103,8 @@
                   class="d-flex flex-column flex-grow-1 mb-3 chat">
             <v-container>
               <v-row v-for="response in chatModel.responses">
-                <v-col cols="1">
-                  <img v-if="response.role !== 'user'" src="../images/chatbot.png" class="chatbot" />
+                <v-col v-if="response.role === 'assistant'" cols="1">
+                  <img src="../images/chatbot.png" class="chatbot" />
                 </v-col>
                 <v-col v-if="chatModel.settingsForm.renderAs === 'markdown'" :class="[ 'response', response.role ]"
                        v-html="markdownToHtml(response.content)"></v-col>
@@ -126,10 +126,22 @@
             <v-col class="d-flex flex-column flex-grow-0">
               <v-btn @click.prevent="submitPrompt" color="blue-darken-2">Submit</v-btn>
 
-              <v-radio-group v-model="chatModel.settingsForm.method" style="width: 125px;">
+              <v-radio-group v-model="chatModel.settingsForm.method"
+                             density="compact"
+                             hide-details
+                             class="mt-2"
+                             style="width: 125px;"
+              >
                 <v-radio value="chat" label="Chat" />
                 <v-radio value="generate" label="Generate" />
               </v-radio-group>
+
+              <v-select v-if="chatModel.settingsForm.method === 'chat'"
+                        v-model="chatModel.settingsForm.role"
+                        variant="outlined"
+                        density="compact"
+                        :items="['assistant', 'system', 'user']"
+              ></v-select>
             </v-col>
           </v-row>
         </v-card>
@@ -333,14 +345,19 @@ Eval tokens: ${json.eval_count}</pre>`;
 
   // Submit the prompt to the server and continuously update the chat
   function submitPrompt() {
-    const message = {role: 'user', content: userPrompt.value};
+    const message = {role: chatModel.value.settingsForm.role, content: userPrompt.value};
 
     // push user prompt to chat as user and reset userPrompt
     chatModel.value.responses.push(message);
     userPrompt.value = '';
 
+    if (message.role !== 'user') {
+      chatModel.value.settingsForm.pastMessages.push(message);
+      return;
+    }
+
     // prepare a bubble for ollama response
-    chatModel.value.responses.push({role: 'ollama', content: 'Waiting...'});
+    chatModel.value.responses.push({role: 'assistant', content: 'Waiting...'});
 
     if (chatModel.value.settingsForm.method === 'chat') {
       chatWithOlama(message);
@@ -430,7 +447,7 @@ Eval tokens: ${json.eval_count}</pre>`;
     pullModelName.value = '';
 
     // push message to chat as user
-    const message = {role: 'ollama', content: 'Pull has started...'};
+    const message = {role: 'assistant', content: 'Pull has started...'};
     chatModel.value.responses.push(message);
 
     // scroll down the chat, so the user prompt is visible
@@ -476,12 +493,20 @@ Eval tokens: ${json.eval_count}</pre>`;
     margin-top: 1rem;
   }
 
-  .ollama {
+  .assistant {
     background: blanchedalmond;
     width: calc(75% - 48px - 1rem);
     border-bottom-left-radius: 0.5rem;
     border-bottom-right-radius: 0.5rem;
     border-top-right-radius: 0.5rem;
+  }
+
+  .system {
+    background: darkseagreen;
+    max-width: 70% !important;
+    margin-left: auto;
+    margin-right: auto;
+    border-radius: 0.5rem;
   }
 </style>
 

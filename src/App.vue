@@ -54,6 +54,7 @@
       method: 'chat',
       pastMessages: [],
       renderAs: 'markdown',
+      role: 'user',
     },
 
     statistics: {
