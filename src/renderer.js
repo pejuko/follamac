@@ -40,7 +40,17 @@ import App from './App.vue';
 
 const app = createApp(App);
 
-const vuetify = createVuetify();
+
+let theme = 'light';
+const darkThemeMq = window.matchMedia("(prefers-color-scheme: dark)");
+if (darkThemeMq.matches) {
+  theme = 'dark';
+}
+const vuetify = createVuetify({
+  theme: {
+    defaultTheme: theme,
+  }
+});
 app.use(vuetify);
 
 const notivue = createNotivue({

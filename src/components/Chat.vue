@@ -92,10 +92,20 @@
 
       <v-main class="d-flex flex-column flex-grow-1 pa-1 h-screen position-absolute"
               style="left: 150px; right: 250px; top: 0; bottom: 0;">
-        <v-radio-group v-model="chatModel.settingsForm.renderAs" inline class="d-flex flex-row flex-grow-0">
-          <v-radio value="markdown" label="Markdown" />
-          <v-radio value="plaintext" label="Plaintext" />
-        </v-radio-group>
+        <v-row class="d-flex flex-row flex-grow-0">
+          <v-col cols="1">
+            <v-icon icon="mdi-brightness-6"
+                    class="ml-2 mt-2 cursor-pointer"
+                    @click="toggleTheme()"
+            />
+          </v-col>
+          <v-col>
+            <v-radio-group v-model="chatModel.settingsForm.renderAs" inline class="d-flex flex-row flex-grow-0">
+              <v-radio value="markdown" label="Markdown" />
+              <v-radio value="plaintext" label="Plaintext" />
+            </v-radio-group>
+          </v-col>
+        </v-row>
 
         <v-card class="d-flex flex-column flex-grow-1 pa-2">
           <v-card :id="`chat-${currentChatId}`"
@@ -104,7 +114,7 @@
             <v-container>
               <v-row v-for="response in chatModel.responses">
                 <v-col v-if="response.role === 'assistant'" cols="1">
-                  <img src="../images/chatbot.png" class="chatbot" />
+                  <div class="chatbot" />
                 </v-col>
                 <v-col v-if="chatModel.settingsForm.renderAs === 'markdown'" :class="[ 'response', response.role ]"
                        v-html="markdownToHtml(response.content)"></v-col>
@@ -159,6 +169,7 @@
 
 <script setup>
   import { ref, onMounted, computed } from 'vue';
+  import { useTheme } from "vuetify";
   import { Marked } from "marked";
   import DOMPurify from 'dompurify';
   import { markedHighlight } from "marked-highlight";
@@ -192,6 +203,12 @@
   const currentModel = computed(() => {
     return chatModel.value.models.find(m => m.name === chatModel.value.settingsForm.model);
   });
+
+  const theme = useTheme();
+
+  function toggleTheme() {
+    theme.global.name.value = theme.global.current.value.dark ? 'light' : 'dark';
+  }
 
   function humanNumber(number) {
     const formater = new Intl.NumberFormat();
@@ -477,7 +494,6 @@ Eval tokens: ${json.eval_count}</pre>`;
   }
 
   .user {
-    background: aliceblue;
     margin-left: 25%;
     width: 75%;
     max-width: 75%;
@@ -486,27 +502,58 @@ Eval tokens: ${json.eval_count}</pre>`;
     border-top-left-radius: 0.5rem;
   }
 
+  .v-theme--light .user {
+    background: aliceblue;
+  }
+
+  .v-theme--dark .user {
+    background: #1f1f2f;
+  }
+
   .chatbot {
-    width: 24px;
-    height: 24px;
+    width: 32px;
+    height: 32px;
     margin: 0;
     margin-top: 1rem;
+    background-size: cover;
+  }
+
+  .v-theme--light .chatbot {
+    background-image: url("../images/chatbot.png");
+  }
+
+  .v-theme--dark .chatbot {
+    background-image: url("../images/chatbot-white.png");
   }
 
   .assistant {
-    background: blanchedalmond;
     width: calc(75% - 48px - 1rem);
     border-bottom-left-radius: 0.5rem;
     border-bottom-right-radius: 0.5rem;
     border-top-right-radius: 0.5rem;
   }
 
+  .v-theme--light .assistant {
+    background: blanchedalmond;
+  }
+
+  .v-theme--dark .assistant {
+    background: #2f2f1f;
+  }
+
   .system {
-    background: darkseagreen;
     max-width: 70% !important;
     margin-left: auto;
     margin-right: auto;
     border-radius: 0.5rem;
+  }
+
+  .v-theme--light .system {
+    background: darkseagreen;
+  }
+
+  .v-theme--dark .system {
+    background: #1f2f1f;
   }
 </style>
 

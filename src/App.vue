@@ -46,7 +46,7 @@
   const newChatDefaults = {
     settingsForm: {
       url: 'http://localhost:11434',
-      model: 'mistral:latest',
+      model: null,
       temperature: '0.8',
       num_thread: '4',
       system: null,
@@ -122,15 +122,11 @@
     display: none;
   }
 
-  .active {
+  .v-theme--light .active {
     background-color: #efefef;
   }
 
-  .tab {
-    padding: 0.5rem;
-  }
-
-  .tab.warning {
-    background-color: #c06718;
+  .v-theme--dark .active {
+    background-color: #161616;
   }
 </style>
