@@ -11,21 +11,39 @@
         >
           <v-tab v-for="(chat, idx) in chats"
                  :value="idx"
-          >{{ chat.name }}</v-tab>
+          >
+            <div>{{ chat.name }}</div>
+
+            <v-menu v-if="currentChatId === idx">
+              <template v-slot:activator="{ props }">
+                <v-icon icon="mdi-dots-vertical" v-bind="props" class="tab-dots"></v-icon>
+              </template>
+
+              <v-list>
+                <v-list-item>
+                  <v-list-item-title @click.prevent="deleteChat(idx)" class="cursor-pointer">
+                    <v-icon icon="mdi-trash-can"></v-icon> Delete
+                  </v-list-item-title>
+                </v-list-item>
+              </v-list>
+            </v-menu>
+          </v-tab>
         </v-tabs>
 
         <br />
         <v-col class="d-flex flex-column">
           <v-btn @click.prevent="addChat()">Add Chat</v-btn>
-          <br />
-          <v-btn @click.prevent="saveAll()">Save All</v-btn>
-          <br />
-          <v-btn @click.prevent="clearAll()" color="red-darken-4">Clear All</v-btn>
         </v-col>
       </v-navigation-drawer>
 
       <v-main>
-        <Chat v-for="(chat, idx) in chats" :key="idx" v-model="chat.chat" :class="{ hidden: idx !== currentChatId }" :currentChatId="idx" />
+        <Chat v-for="(chat, idx) in chats"
+              :key="idx"
+              v-model="chat.chat"
+              :class="{ hidden: idx !== currentChatId }"
+              :currentChatId="idx"
+              @change="saveAll"
+        />
       </v-main>
     </v-layout>
   </v-card>
@@ -36,9 +54,10 @@
 </template>
 
 <script setup>
-  import { onMounted, ref } from "vue";
+  import { onMounted, ref, watch } from "vue";
   import Chat from "@/components/Chat.vue";
   import { Notivue, Notification, push } from 'notivue';
+  import { useTheme } from "vuetify";
 
   const chats = ref([]);
   const currentChatId = ref(-1);
@@ -86,10 +105,22 @@
     currentChatId.value = id;
   }
 
+  const theme = useTheme();
+
+  function saveTheme() {
+    localStorage.setItem('theme', theme.global.name.value);
+  }
+
+  function saveCurrentChatId() {
+    localStorage.setItem('currentChatId', currentChatId.value.toString());
+  }
+
   function saveAll() {
     const data = JSON.stringify(chats.value);
     localStorage.setItem('chats', data);
-    push.success('All was saved.');
+    saveCurrentChatId();
+    saveTheme();
+    // push.success('All was saved.');
   }
 
   function restoreAll() {
@@ -97,9 +128,22 @@
     if (data) {
       chats.value = JSON.parse(data);
       if (chats.value.length > 0) {
-        currentChatId.value = 0;
+        data = localStorage.getItem('currentChatId');
+        currentChatId.value = data ? parseInt(data) : 0;
       }
     }
+    data = localStorage.getItem('theme');
+    if (data) {
+      theme.global.name.value = data;
+    }
+  }
+
+  function deleteChat(idx) {
+    if (currentChatId.value === idx) {
+      currentChatId.value -= 1;
+    }
+    chats.value.splice(idx, 1);
+    saveAll();
   }
 
   function clearAll() {
@@ -115,6 +159,10 @@
       addChat();
     }
   });
+
+  watch(currentChatId, () => {
+    saveCurrentChatId();
+  })
 </script>
 
 <style scoped>
@@ -128,5 +176,10 @@
 
   .v-theme--dark .active {
     background-color: #161616;
+  }
+
+  .tab-dots {
+    position: absolute;
+    right: 0;
   }
 </style>

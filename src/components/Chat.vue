@@ -32,17 +32,20 @@
                 <v-text-field v-model="chatModel.settingsForm.temperature"
                               label="Temperature"
                               variant="outlined"
+                              @change="change"
                 ></v-text-field>
 
                 <v-text-field v-model="chatModel.settingsForm.num_thread"
                               label="Threads"
                               variant="outlined"
+                              @change="change"
                 ></v-text-field>
 
                 <v-text-field v-if="chatModel.settingsForm.method === 'generate'"
                               v-model="chatModel.settingsForm.system"
                               label="System message"
                               variant="outlined"
+                              @change="change"
                 ></v-text-field>
               </div>
 
@@ -197,6 +200,7 @@
     currentChatId: Number,
   });
   const chatModel = defineModel();
+  const emit = defineEmits(['change']);
 
   const userPrompt = ref('');
   const confirmation = ref(false);
@@ -208,8 +212,13 @@
 
   const theme = useTheme();
 
+  function change() {
+    emit('change');
+  }
+
   function toggleTheme() {
     theme.global.name.value = theme.global.current.value.dark ? 'light' : 'dark';
+    change();
   }
 
   function humanNumber(number) {
@@ -294,6 +303,7 @@ Load duration: ${humanNumber(nanosecondsToSeconds(json.load_duration))} seconds
 Eval duration: ${humanNumber(nanosecondsToSeconds(json.eval_duration))} seconds
 Prompt tokens: ${json.prompt_eval_count}
 Eval tokens: ${json.eval_count}</pre>`;
+      change();
     }
 
     return messages;
@@ -418,6 +428,7 @@ Eval tokens: ${json.eval_count}</pre>`;
     if (chatModel.value.currentModelDetail.system) {
       chatModel.value.settingsForm.system = chatModel.value.currentModelDetail.system;
     }
+    change();
   }
 
   async function deleteCurrentModel() {
