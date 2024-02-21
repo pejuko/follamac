@@ -1,6 +1,9 @@
 const { app, Menu, BrowserWindow, shell } = require('electron');
 const path = require('path');
 
+const Store = require('electron-store');
+const store = new Store();
+
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (require('electron-squirrel-startup')) {
   app.quit();
@@ -11,15 +14,25 @@ const openExternalLink = (link) => {
   return shell.openExternal(link);
 };
 
+let windowConfig = {
+  width: 1024,
+  height: 768,
+};
+
 const createWindow = () => {
+  Object.assign(windowConfig, store.get("winBounds"));
   // Create the browser window.
   const mainWindow = new BrowserWindow({
-    width: 1027,
-    height: 768,
+    width: windowConfig.width,
+    height: windowConfig.height,
     icon: path.join(__dirname, 'build/icons/icon.png'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
     },
+  });
+
+  mainWindow.on('close', () => {
+    store.set('winBounds', mainWindow.getBounds());
   });
 
   mainWindow.webContents.on('will-navigate', (e, url) => {
