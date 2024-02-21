@@ -129,7 +129,6 @@
               <v-textarea v-model="userPrompt"
                           placeholder="Enter your prompt..."
                           variant="outlined"
-                          auto-grow
               />
             </v-col>
 
