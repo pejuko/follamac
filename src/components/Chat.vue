@@ -116,10 +116,12 @@
                 <v-col v-if="response.role === 'assistant'" cols="1">
                   <div class="chatbot" />
                 </v-col>
-                <v-col v-if="chatModel.settingsForm.renderAs === 'markdown'" :class="[ 'response', response.role ]"
-                       v-html="markdownToHtml(response.content)"></v-col>
-                <v-col v-else :class="[ 'response', response.role ]"
-                       v-html="plaintextToHtml(response.content)"></v-col>
+                <v-col :class="[ 'response', response.role ]">
+                  <div v-if="chatModel.settingsForm.renderAs === 'markdown'"
+                       v-html="markdownToHtml(response.content)" />
+                  <div v-else v-html="plaintextToHtml(response.content)"></div>
+                </v-col>
+
               </v-row>
             </v-container>
           </v-card>
@@ -180,7 +182,8 @@
       markedHighlight({
         langPrefix: 'language-',
         highlight(code, lang, info) {
-          return hljs.highlightAuto(code).value;
+          const result = hljs.highlightAuto(code);
+          return `<div class="content-to-copy">${DOMPurify.sanitize(code)}</div>` + result.value;
           // const language = hljs.getLanguage(lang) ? lang : 'plaintext';
           // return hljs.highlight(code, {
           //   language,
@@ -225,13 +228,20 @@
     return number / 1_000_000_000;
   }
 
+  function addCopyButton(html) {
+    return html.replace(
+        /<pre>\s*<code/gi,
+        '<div class="code-tools-container"><button onclick="copyToClipboard(this)" class="copy-to-clipboard">copy</button></div><pre><code'
+    );
+  }
+
   function markdownToHtml(markdown) {
-    return DOMPurify.sanitize(marked.parse(
+    return addCopyButton(DOMPurify.sanitize(marked.parse(
         markdown.replace(/^[\u200B\u200C\u200D\u200E\u200F\uFEFF]/, ''),
         {
           breaks: true,
         }
-    ));
+    )));
   }
 
   function plaintextToHtml(content) {
@@ -579,5 +589,20 @@ Eval tokens: ${json.eval_count}</pre>`;
 
   p, pre {
     margin-bottom: 0.5rem;
+  }
+
+  .content-to-copy {
+    display: none;
+  }
+
+  .copy-to-clipboard {
+    padding: 1rem;
+    color: white !important;
+  }
+
+  .code-tools-container {
+    background: black;
+    border-bottom: 1px solid gray;
+    text-align: right;
   }
 </style>

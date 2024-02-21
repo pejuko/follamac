@@ -63,3 +63,11 @@ const notivue = createNotivue({
 app.use(notivue);
 
 app.mount('#app');
+
+function copyToClipboard(_this) {
+  const contentToCopyElement = _this.parentElement.nextSibling.getElementsByClassName('content-to-copy')[0];
+  let txt = document.createElement('textarea');
+  txt.innerHTML = contentToCopyElement.innerHTML;
+  navigator.clipboard.writeText(txt.value);
+}
+window.copyToClipboard = copyToClipboard;
