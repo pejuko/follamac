@@ -343,7 +343,6 @@ Eval tokens: {{ response.statistics.eval_count }}</pre>
   }
 
   function handleChatChunks(chunks) {
-    let messages = [];
     let chunk = null;
     let message = ''
     let json = null;
@@ -363,12 +362,14 @@ Eval tokens: {{ response.statistics.eval_count }}</pre>
 
     // if ollama has nothing more to say, show statistics
     if (json.done === true) {
-      if (json.message) {
-        messages = [{role: json.message.role, content: message, images: json.images }];
-      }
+      chatModel.value.responses[chatModel.value.responses.length - 1].finished = true;
 
       if (json.context) {
         chatModel.value.settingsForm.context = json.context;
+      }
+
+      if (json.images) {
+        chatModel.value.responses[chatModel.value.responses.length - 1].images = json.images;
       }
 
       chatModel.value.responses[chatModel.value.responses.length - 1].statistics = {
@@ -385,8 +386,6 @@ Eval tokens: {{ response.statistics.eval_count }}</pre>
 
       change();
     }
-
-    return messages;
   }
 
   // read Ollama's stream response
@@ -427,7 +426,13 @@ Eval tokens: {{ response.statistics.eval_count }}</pre>
     const chatElement = getChatElement();
     chatElement.scrollTo(0, chatElement.scrollHeight);
 
-    let messages = [...chatModel.value.settingsForm.pastMessages, message];
+    let messages = chatModel.value.responses.filter(r => r.finished).map(r => {
+      return {
+        role: r.role,
+        content: r.content,
+        images: r.images ? r.images.map(i => i.split(',')[1]) : null,
+      };
+    });
 
     try {
       // make a request to Ollama server
@@ -435,10 +440,7 @@ Eval tokens: {{ response.statistics.eval_count }}</pre>
         model: chatModel.value.settingsForm.model, messages: messages, stream: true, options: getOlamaOptions()
       });
 
-      chatModel.value.settingsForm.pastMessages = [
-        ...messages,
-        ...await readOllamaResponse(response, chatElement, handleChatChunks),
-      ];
+      await readOllamaResponse(response, chatElement, handleChatChunks);
     } catch (e) {
       console.log(e);
       push.error(e.toString());
@@ -507,19 +509,18 @@ Eval tokens: {{ response.statistics.eval_count }}</pre>
     const message = { role: chatModel.value.settingsForm.role, content: userPrompt.value };
 
     // push user prompt to chat as user and reset userPrompt
-    chatModel.value.responses.push({...message, images: loadedImages.value.map(i => i.url) });
+    chatModel.value.responses.push({...message, images: loadedImages.value.map(i => i.url), finished: true });
     message.images = loadedImages.value.map(i => i.b64file);
     userPrompt.value = '';
     userImages.value = [];
     loadedImages.value = [];
 
     if (message.role !== 'user') {
-      chatModel.value.settingsForm.pastMessages.push(message);
       return;
     }
 
     // prepare a bubble for ollama response
-    chatModel.value.responses.push({role: 'assistant', content: 'Waiting...'});
+    chatModel.value.responses.push({role: 'assistant', content: 'Waiting...', finished: false });
 
     if (chatModel.value.settingsForm.method === 'chat') {
       await chatWithOlama(message);
