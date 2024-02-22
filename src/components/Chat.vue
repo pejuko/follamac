@@ -159,11 +159,35 @@ Eval tokens: {{ response.statistics.eval_count }}</pre>
             </v-container>
           </v-card>
 
+          <v-row v-if="loadedImages.length > 0">
+            <v-col v-for="(image, idx) in loadedImages" :key="idx">
+              <img :src="image.url" :alt="image.file.name" :title="image.file.name" width="100px" height="auto" />
+            </v-col>
+          </v-row>
+
+          <v-row>
+            <v-col>
+              <v-file-input
+                  v-model="userImages"
+                  show-size
+                  counter
+                  multiple
+                  variant="underlined"
+                  density="compact"
+                  hide-details
+                  label="Images"
+                  @change="loadImages"
+              ></v-file-input>
+            </v-col>
+          </v-row>
+
           <v-row class="d-flex flex-row flex-grow-0 prompt">
             <v-col class="d-flex flex-column flex-grow-1">
               <v-textarea v-model="userPrompt"
                           placeholder="Enter your prompt..."
                           variant="outlined"
+                          auto-grow
+                          :max-rows="15"
               />
             </v-col>
 
@@ -232,6 +256,8 @@ Eval tokens: {{ response.statistics.eval_count }}</pre>
   const chatModel = defineModel();
   const emit = defineEmits(['change']);
 
+  const userImages = ref([]);
+  const loadedImages = ref([]);
   const userPrompt = ref('');
   const confirmation = ref(false);
   const pullModelName = ref('');
@@ -327,10 +353,15 @@ Eval tokens: {{ response.statistics.eval_count }}</pre>
     // update last entry in the response array
     chatModel.value.responses[chatModel.value.responses.length - 1].content = message;
 
+    if (json.error) {
+      console.log(json.error);
+      push.error(json.error);
+    }
+
     // if ollama has nothing more to say, show statistics
     if (json.done === true) {
       if (json.message) {
-        messages = [{role: json.message.role, content: message}];
+        messages = [{role: json.message.role, content: message, images: json.images }];
       }
 
       if (json.context) {
@@ -422,6 +453,7 @@ Eval tokens: {{ response.statistics.eval_count }}</pre>
       const response = await getOllama().generate({
         model: chatModel.value.settingsForm.model,
         prompt: message.content,
+        images: message.images,
         stream: true,
         system: chatModel.value.settingsForm.system,
         context: chatModel.value.settingsForm.context,
@@ -435,13 +467,58 @@ Eval tokens: {{ response.statistics.eval_count }}</pre>
     }
   }
 
+  function addImage(file, b64file) {
+    let image = {
+      file,
+      b64file: b64file.split(',')[1],
+      url: URL.createObjectURL(file),
+    };
+    loadedImages.value.push(image);
+  }
+
+  function loadImages() {
+    if (userImages.value.length <= 0) {
+      return;
+    }
+
+    userImages.value.forEach((file) => {
+      const reader = new FileReader();
+
+      reader.onload = function(event) {
+        // Convert file to Base64 string
+        // btoa is built int javascript function for base64 encoding
+        addImage(file, event.target.result);
+      };
+
+      reader.onerror = function() {
+        console.log("can't read the file");
+        push.error('Cannot read the file');
+      };
+
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function getUserImages() {
+    let images = [];
+
+    for (let i = 0; i < loadedImages.value.length; i++) {
+      const img = loadedImages.value[i];
+      images.push(img.b64file);
+    }
+
+    return images;
+  }
+
   // Submit the prompt to the server and continuously update the chat
-  function submitPrompt() {
-    const message = {role: chatModel.value.settingsForm.role, content: userPrompt.value};
+  async function submitPrompt() {
+    const message = {role: chatModel.value.settingsForm.role, content: userPrompt.value, images: getUserImages()};
 
     // push user prompt to chat as user and reset userPrompt
     chatModel.value.responses.push(message);
     userPrompt.value = '';
+    userImages.value = [];
+    loadedImages.value = [];
 
     if (message.role !== 'user') {
       chatModel.value.settingsForm.pastMessages.push(message);
@@ -452,9 +529,9 @@ Eval tokens: {{ response.statistics.eval_count }}</pre>
     chatModel.value.responses.push({role: 'assistant', content: 'Waiting...'});
 
     if (chatModel.value.settingsForm.method === 'chat') {
-      chatWithOlama(message);
+      await chatWithOlama(message);
     } else {
-      generateWithOlama(message);
+      await generateWithOlama(message);
     }
   }
 
