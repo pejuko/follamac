@@ -137,6 +137,9 @@
                       </v-list>
                     </v-menu>
                   </div>
+                  <div v-if="response.images && response.images.length > 0">
+                    <img v-for="image in response.images" :src="image" width="auto" height="100px" />
+                  </div>
                   <div v-if="chatModel.settingsForm.renderAs === 'markdown' && editResponseId !== idx"
                        v-html="markdownToHtml(response.content)" />
                   <v-textarea v-else-if="editResponseId === idx"
@@ -161,7 +164,7 @@ Eval tokens: {{ response.statistics.eval_count }}</pre>
 
           <v-row v-if="loadedImages.length > 0">
             <v-col v-for="(image, idx) in loadedImages" :key="idx">
-              <img :src="image.url" :alt="image.file.name" :title="image.file.name" width="100px" height="auto" />
+              <img :src="image.url" :alt="image.file.name" :title="image.file.name" width="auto" height="100px" />
             </v-col>
           </v-row>
 
@@ -471,7 +474,7 @@ Eval tokens: {{ response.statistics.eval_count }}</pre>
     let image = {
       file,
       b64file: b64file.split(',')[1],
-      url: URL.createObjectURL(file),
+      url: b64file, // URL.createObjectURL(file),
     };
     loadedImages.value.push(image);
   }
@@ -499,23 +502,13 @@ Eval tokens: {{ response.statistics.eval_count }}</pre>
     });
   }
 
-  function getUserImages() {
-    let images = [];
-
-    for (let i = 0; i < loadedImages.value.length; i++) {
-      const img = loadedImages.value[i];
-      images.push(img.b64file);
-    }
-
-    return images;
-  }
-
   // Submit the prompt to the server and continuously update the chat
   async function submitPrompt() {
-    const message = {role: chatModel.value.settingsForm.role, content: userPrompt.value, images: getUserImages()};
+    const message = { role: chatModel.value.settingsForm.role, content: userPrompt.value };
 
     // push user prompt to chat as user and reset userPrompt
-    chatModel.value.responses.push(message);
+    chatModel.value.responses.push({...message, images: loadedImages.value.map(i => i.url) });
+    message.images = loadedImages.value.map(i => i.b64file);
     userPrompt.value = '';
     userImages.value = [];
     loadedImages.value = [];
