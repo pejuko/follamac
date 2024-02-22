@@ -19,7 +19,8 @@
                           hide-details
                           density="compact"
                           style="width: 100px"
-                          @change="editChatId = -1; saveAll()" />
+                          @blur="editChatId = -1; saveAll()"
+            />
 
             <v-menu v-if="currentChatId === idx">
               <template v-slot:activator="{ props }">

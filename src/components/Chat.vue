@@ -115,14 +115,44 @@
                   variant="outlined"
                   class="d-flex flex-column flex-grow-1 mb-3 chat">
             <v-container>
-              <v-row v-for="response in chatModel.responses">
+              <v-row v-for="(response, idx) in chatModel.responses">
                 <v-col v-if="response.role === 'assistant'" cols="1">
                   <div class="chatbot" />
                 </v-col>
                 <v-col :class="[ 'response', response.role ]">
-                  <div v-if="chatModel.settingsForm.renderAs === 'markdown'"
+                  <div class="text-right">
+                    <v-icon icon="mdi-content-copy" class="cursor-pointer" @click="copyResponseToClipboard(response.content)"></v-icon>
+                    <v-icon icon="mdi-pencil" class="ml-3 cursor-pointer" @click="editResponseId = idx"></v-icon>
+                    <v-menu>
+                      <template v-slot:activator="{ props }">
+                        <v-icon icon="mdi-trash-can" v-bind="props" class="ml-3 cursor-pointer"></v-icon>
+                      </template>
+
+                      <v-list>
+                        <v-list-item>
+                          <v-list-item-title @click.prevent="deleteResponse(idx)" class="cursor-pointer">
+                            <v-icon icon="mdi-trash-can"></v-icon> Delete!
+                          </v-list-item-title>
+                        </v-list-item>
+                      </v-list>
+                    </v-menu>
+                  </div>
+                  <div v-if="chatModel.settingsForm.renderAs === 'markdown' && editResponseId !== idx"
                        v-html="markdownToHtml(response.content)" />
+                  <v-textarea v-else-if="editResponseId === idx"
+                              v-model="response.content"
+                              variant="outlined"
+                              auto-grow
+                              @blur="editResponseId = -1; change()"
+                  >{{ response.content }}</v-textarea>
                   <div v-else v-html="plaintextToHtml(response.content)"></div>
+                  <pre v-if="response.statistics"
+                       class="mt-10 system"
+                  >Total duration: {{ humanNumber(nanosecondsToSeconds(response.statistics.total_duration)) }} seconds
+Load duration: {{ humanNumber(nanosecondsToSeconds(response.statistics.load_duration)) }} seconds
+Eval duration: {{ humanNumber(nanosecondsToSeconds(response.statistics.eval_duration)) }} seconds
+Prompt tokens: {{ response.statistics.prompt_eval_count }}
+Eval tokens: {{ response.statistics.eval_count }}</pre>
                 </v-col>
 
               </v-row>
@@ -205,12 +235,22 @@
   const userPrompt = ref('');
   const confirmation = ref(false);
   const pullModelName = ref('');
+  const editResponseId = ref(-1);
 
   const currentModel = computed(() => {
     return chatModel.value.models.find(m => m.name === chatModel.value.settingsForm.model);
   });
 
   const theme = useTheme();
+
+  function copyResponseToClipboard(text) {
+    navigator.clipboard.writeText(text);
+  }
+
+  function deleteResponse(idx) {
+    chatModel.value.responses.splice(idx, 1);
+    change();
+  }
 
   function change() {
     emit('change');
@@ -254,7 +294,11 @@
   }
 
   function plaintextToHtml(content) {
-    return '<pre style="background: transparent; color: black; white-space: break-spaces">' + DOMPurify.sanitize(content) + '</pre>';
+    return '<pre style="background: transparent; white-space: break-spaces">' + sanitizeHtml(content) + '</pre>';
+  }
+
+  function sanitizeHtml(content) {
+    return DOMPurify.sanitize(content);
   }
 
   function getOlamaOptions() {
@@ -293,16 +337,18 @@
         chatModel.value.settingsForm.context = json.context;
       }
 
+      chatModel.value.responses[chatModel.value.responses.length - 1].statistics = {
+        total_duration: json.total_duration,
+        load_duration: json.load_duration,
+        eval_duration: json.eval_duration,
+        prompt_eval_count: json.prompt_eval_count,
+        eval_count: json.eval_count,
+      };
+
       chatModel.value.statistics.total_time += json.total_duration;
       chatModel.value.statistics.total_prompt_tokens += json.prompt_eval_count;
       chatModel.value.statistics.total_eval_tokens += json.eval_count;
 
-      chatModel.value.responses[chatModel.value.responses.length - 1].content +=
-          `\n\n<pre class="system">Total duration: ${humanNumber(nanosecondsToSeconds(json.total_duration))} seconds
-Load duration: ${humanNumber(nanosecondsToSeconds(json.load_duration))} seconds
-Eval duration: ${humanNumber(nanosecondsToSeconds(json.eval_duration))} seconds
-Prompt tokens: ${json.prompt_eval_count}
-Eval tokens: ${json.eval_count}</pre>`;
       change();
     }
 
