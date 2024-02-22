@@ -12,7 +12,14 @@
           <v-tab v-for="(chat, idx) in chats"
                  :value="idx"
           >
-            <div>{{ chat.name }}</div>
+            <div v-if="editChatId !== idx" class="chat-name">{{ chat.name }}</div>
+            <v-text-field v-else
+                          v-model="chat.name"
+                          variant="solo"
+                          hide-details
+                          density="compact"
+                          style="width: 100px"
+                          @change="editChatId = -1; saveAll()" />
 
             <v-menu v-if="currentChatId === idx">
               <template v-slot:activator="{ props }">
@@ -23,6 +30,12 @@
                 <v-list-item>
                   <v-list-item-title @click.prevent="deleteChat(idx)" class="cursor-pointer">
                     <v-icon icon="mdi-trash-can"></v-icon> Delete
+                  </v-list-item-title>
+                </v-list-item>
+
+                <v-list-item>
+                  <v-list-item-title @click.prevent="editChatId = idx" class="cursor-pointer">
+                    <v-icon icon="mdi-pencil"></v-icon> Edit name
                   </v-list-item-title>
                 </v-list-item>
               </v-list>
@@ -61,6 +74,7 @@
 
   const chats = ref([]);
   const currentChatId = ref(-1);
+  const editChatId = ref(-1);
 
   const newChatDefaults = {
     settingsForm: {
@@ -181,5 +195,13 @@
   .tab-dots {
     position: absolute;
     right: 0;
+  }
+
+  .chat-name {
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+    width: 105px;
+    text-align: left;
   }
 </style>
