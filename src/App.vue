@@ -29,14 +29,14 @@
 
               <v-list>
                 <v-list-item>
-                  <v-list-item-title @click.prevent="deleteChat(idx)" class="cursor-pointer">
-                    <v-icon icon="mdi-trash-can"></v-icon> Delete
+                  <v-list-item-title @click.prevent="editChatId = idx" class="cursor-pointer">
+                    <v-icon icon="mdi-pencil"></v-icon> Edit name
                   </v-list-item-title>
                 </v-list-item>
 
                 <v-list-item>
-                  <v-list-item-title @click.prevent="editChatId = idx" class="cursor-pointer">
-                    <v-icon icon="mdi-pencil"></v-icon> Edit name
+                  <v-list-item-title @click.prevent="deleteChat(idx)" class="cursor-pointer">
+                    <v-icon icon="mdi-trash-can"></v-icon> Delete
                   </v-list-item-title>
                 </v-list-item>
               </v-list>
