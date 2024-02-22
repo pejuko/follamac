@@ -395,15 +395,20 @@ Eval tokens: {{ response.statistics.eval_count }}</pre>
 
     let messages = [...chatModel.value.settingsForm.pastMessages, message];
 
-    // make a request to Ollama server
-    const response = await getOllama().chat({
-      model: chatModel.value.settingsForm.model, messages: messages, stream: true, options: getOlamaOptions()
-    });
+    try {
+      // make a request to Ollama server
+      const response = await getOllama().chat({
+        model: chatModel.value.settingsForm.model, messages: messages, stream: true, options: getOlamaOptions()
+      });
 
-    chatModel.value.settingsForm.pastMessages = [
-      ...messages,
-      ...await readOllamaResponse(response, chatElement, handleChatChunks),
-    ];
+      chatModel.value.settingsForm.pastMessages = [
+        ...messages,
+        ...await readOllamaResponse(response, chatElement, handleChatChunks),
+      ];
+    } catch (e) {
+      console.log(e);
+      push.error(e.toString());
+    }
   }
 
   // send mesage to the server using method generate
@@ -412,17 +417,22 @@ Eval tokens: {{ response.statistics.eval_count }}</pre>
     const chatElement = getChatElement();
     chatElement.scrollTo(0, chatElement.scrollHeight);
 
-    // make a request to Ollama server
-    const response = await getOllama().generate({
-      model: chatModel.value.settingsForm.model,
-      prompt: message.content,
-      stream: true,
-      system: chatModel.value.settingsForm.system,
-      context: chatModel.value.settingsForm.context,
-      options: getOlamaOptions()
-    });
+    try {
+      // make a request to Ollama server
+      const response = await getOllama().generate({
+        model: chatModel.value.settingsForm.model,
+        prompt: message.content,
+        stream: true,
+        system: chatModel.value.settingsForm.system,
+        context: chatModel.value.settingsForm.context,
+        options: getOlamaOptions()
+      });
 
-    await readOllamaResponse(response, chatElement, handleChatChunks);
+      await readOllamaResponse(response, chatElement, handleChatChunks);
+    } catch (e) {
+      console.log(e);
+      push.error(e.toString());
+    }
   }
 
   // Submit the prompt to the server and continuously update the chat
@@ -522,23 +532,28 @@ Eval tokens: {{ response.statistics.eval_count }}</pre>
       return;
     }
 
-    const response = await getOllama().pull(pullModelName.value);
-    if (!response.ok) {
-      push.error('Cannot start pull.');
-      return;
+    try {
+      const response = await getOllama().pull(pullModelName.value);
+      if (!response.ok) {
+        push.error('Cannot start pull.');
+        return;
+      }
+      pullModelName.value = '';
+
+      // push message to chat as user
+      const message = {role: 'assistant', content: 'Pull has started...'};
+      chatModel.value.responses.push(message);
+
+      // scroll down the chat, so the user prompt is visible
+      const chatElement = getChatElement();
+      chatElement.scrollTo(0, chatElement.scrollHeight);
+
+      await readOllamaResponse(response, chatElement, handlePullChunks);
+      await getModels();
+    } catch (e) {
+      console.log(e);
+      push.error(e.toString());
     }
-    pullModelName.value = '';
-
-    // push message to chat as user
-    const message = {role: 'assistant', content: 'Pull has started...'};
-    chatModel.value.responses.push(message);
-
-    // scroll down the chat, so the user prompt is visible
-    const chatElement = getChatElement();
-    chatElement.scrollTo(0, chatElement.scrollHeight);
-
-    await readOllamaResponse(response, chatElement, handlePullChunks);
-    getModels();
   }
 
   onMounted(() => {
