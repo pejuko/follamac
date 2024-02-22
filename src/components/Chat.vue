@@ -120,7 +120,7 @@
                   <div class="chatbot" />
                 </v-col>
                 <v-col :class="[ 'response', response.role ]">
-                  <div class="text-right">
+                  <div class="text-right mb-3">
                     <v-icon icon="mdi-content-copy" class="cursor-pointer" @click="copyResponseToClipboard(response.content)"></v-icon>
                     <v-icon icon="mdi-pencil" class="ml-3 cursor-pointer" @click="editResponseId = idx"></v-icon>
                     <v-menu>
