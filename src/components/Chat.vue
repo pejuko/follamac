@@ -243,7 +243,7 @@ Eval tokens: {{ response.statistics.eval_count }}</pre>
         langPrefix: 'language-',
         highlight(code, lang, info) {
           const result = hljs.highlightAuto(code);
-          return `<div class="content-to-copy">${DOMPurify.sanitize(code)}</div>` + result.value;
+          return `<div class="content-to-copy">${encodeHTMLEntities(code)}</div>` + result.value;
           // const language = hljs.getLanguage(lang) ? lang : 'plaintext';
           // return hljs.highlight(code, {
           //   language,
@@ -314,7 +314,7 @@ Eval tokens: {{ response.statistics.eval_count }}</pre>
   }
 
   function markdownToHtml(markdown) {
-    return addCopyButton(DOMPurify.sanitize(marked.parse(
+    return addCopyButton(sanitizeHtml(marked.parse(
         markdown.replace(/^[\u200B\u200C\u200D\u200E\u200F\uFEFF]/, ''),
         {
           breaks: true,
@@ -323,11 +323,15 @@ Eval tokens: {{ response.statistics.eval_count }}</pre>
   }
 
   function plaintextToHtml(content) {
-    return '<pre style="background: transparent; white-space: break-spaces">' + sanitizeHtml(content) + '</pre>';
+    return '<pre style="background: transparent; white-space: break-spaces">' + encodeHTMLEntities(content) + '</pre>';
   }
 
   function sanitizeHtml(content) {
     return DOMPurify.sanitize(content);
+  }
+
+  function encodeHTMLEntities(text) {
+    return text.replace(/[\u00A0-\u9999<>\&]/g, i => '&#' + i.charCodeAt(0) + ';');
   }
 
   function getOlamaOptions() {
