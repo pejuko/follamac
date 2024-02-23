@@ -96,3 +96,8 @@ dist/
 
 .idea/
 
+.flatpak-builder/
+
+build/
+
+generated-sources.json
