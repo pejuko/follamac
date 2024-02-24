@@ -13,6 +13,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
+    "start": "electron .",
     "lint": "echo \"No linting configured\""
   },
   "keywords": [

@@ -1,62 +1,33 @@
-<img alt="screenshot" width="800" src="https://github.com/pejuko/follamac/blob/main/images/screenshot.png?raw=true" />
-
 # Follamac
 
-Follamac is an desktop application and provides convenient way to work with [Ollama](https://ollama.com/)
+<img alt="screenshot" width="800" src="https://pejuko.github.io/follamac/images/screenshot.png" style="border: 1px solid black" />
+
+Follamac is a desktop application which provides convenient way to work with [Ollama](https://ollama.com/)
 and large language models (LLMs).
-.
 
-The Ollama server must be running. You can start it using `sudo systemctl start ollama.service`
+The Ollama server must be running. On Linux you can start it using `sudo systemctl start ollama.service`
 or `ollama serve` commands. And you need to have some models pulled in the repository. You can pull
-latest mistral using command `ollama pull mistral`.
+latest mistral using command `ollama pull mistral` or you can run Follamac and pull the model from there.
 
-## Installing building dependencies
+## Running locally
 
-```bash
+### install dependencies
+```shell
 yarn install
+```
+
+### build and start the application
+```shell
+yarn build
+yarn start
 ```
 
 ## Running dev version
 
-```bash
-yarn start
-```
-
-## Building AppImage on Linux
-
-```bash
-./build-appimage.sh
-```
-
-## Running AppImage
-
-```bash
-./dist/Free\ Ollama\ Client-0.0.1.AppImage
-```
-
-## Building Flatpak on Linux
-
-```bash
-./build-flatpak.sh
-```
-
-## Installing Flatpak from file
-
-```bash
-flatpak install -u --bundle ./dist/Free\ Ollama\ Client-0.0.1-x86_64.flatpak
-```
-
-## Building Windows exe on Linux
-
-```bash
-./build-win-portable.sh
-```
-
-## Building Windows exe on Windows
-
 ```shell
-.\build-windows.bat
+yarn dev
 ```
+and then visit the url in your browser.
 
 ## Keyboard shortcuts
 
@@ -64,5 +35,5 @@ flatpak install -u --bundle ./dist/Free\ Ollama\ Client-0.0.1-x86_64.flatpak
 
 ## Attribution
 
-<img alt="chatbot" width="64" height="64" src="https://github.com/pejuko/follamac/blob/main/src/images/chatbot.png?raw=true" />
+<img alt="chatbot" width="32" height="32" src="https://github.com/pejuko/follamac/blob/main/src/images/chatbot.png?raw=true" />
 <a href="https://www.flaticon.com/free-icons/personal-assistant" title="personal-assistant icons">Personal-assistant icons created by edt.im - Flaticon</a>
