@@ -44,5 +44,11 @@
     "notivue": "^2.2.1",
     "vue": "^3.4.18",
     "vuetify": "^3.5.4"
+  },
+  "build": {
+    "appId": "io.github.pejuko.follamac",
+    "directories": {
+      "buildResources": "images"
+    }
   }
 }

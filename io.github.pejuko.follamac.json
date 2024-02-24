@@ -37,11 +37,11 @@
         "yarn --offline build",
         "yarn --offline dist --x64 --linux --dir",
         "cp -a dist/linux*unpacked /app/main",
-        "install -Dm755 -t /app/bin/ ../../run.sh"
+        "install -Dm755 -t /app/bin/ ../run.sh"
       ],
-      "subdir": "main/follamac",
+      "subdir": "main",
       "sources": [
-        { "type": "dir", "path": "..", "dest": "main" },
+        { "type": "dir", "path": ".", "dest": "main" },
         "generated-sources.json",
         { "type": "script", "dest-filename": "run.sh", "commands": [ "zypak-wrapper.sh /app/main/follamac \"$@\"" ] }
       ]
