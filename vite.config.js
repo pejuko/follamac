@@ -5,6 +5,8 @@ import vuetify from "vite-plugin-vuetify";
 
 // https://vitejs.dev/config
 export default defineConfig({
+  root: path.resolve(__dirname, './src'),
+  base: '',
   plugins: [
       vue(),
       vuetify({

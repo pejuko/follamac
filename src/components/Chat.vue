@@ -57,14 +57,18 @@
 
           <v-spacer />
 
-          <v-row v-if="currentModel" class="d-flex flex-column flex-grow-0 commands">
+          <v-row class="d-flex flex-column flex-grow-0 commands">
             <v-col>
               <v-text-field v-model="pullModelName"
                             label="Model name to pull"
                             variant="outlined"
               ></v-text-field>
               <v-btn @click.prevent="pullModel()" class="mb-3">Pull</v-btn>
+            </v-col>
+          </v-row>
 
+          <v-row v-if="currentModel" class="d-flex flex-column flex-grow-0 commands">
+            <v-col>
               <v-dialog transition="dialog-top-transition"
                         v-model="confirmation"
               >

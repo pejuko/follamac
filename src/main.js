@@ -1,87 +1,73 @@
-const { app, Menu, BrowserWindow, shell } = require('electron');
-const path = require('path');
+/**
+ * This file will automatically be loaded by vite and run in the "renderer" context.
+ * To learn more about the differences between the "main" and the "renderer" context in
+ * Electron, visit:
+ *
+ * https://electronjs.org/docs/tutorial/application-architecture#main-and-renderer-processes
+ *
+ * By default, Node.js integration in this file is disabled. When enabling Node.js integration
+ * in a renderer process, please be aware of potential security implications. You can read
+ * more about security risks here:
+ *
+ * https://electronjs.org/docs/tutorial/security
+ *
+ * To enable Node.js integration in this file, open up `main.js` and enable the `nodeIntegration`
+ * flag:
+ *
+ * ```
+ *  // Create the browser window.
+ *  mainWindow = new BrowserWindow({
+ *    width: 800,
+ *    height: 600,
+ *    webPreferences: {
+ *      nodeIntegration: true
+ *    }
+ *  });
+ * ```
+ */
 
-const Store = require('electron-store');
-const store = new Store();
+import { createApp } from 'vue';
 
-// Handle creating/removing shortcuts on Windows when installing/uninstalling.
-if (require('electron-squirrel-startup')) {
-  app.quit();
+import '@mdi/font/css/materialdesignicons.css'
+import 'vuetify/styles'
+import { createVuetify } from 'vuetify'
+
+import { createNotivue } from 'notivue'
+import 'notivue/notifications.css' // Only needed if using built-in notifications
+import 'notivue/animations.css' // Only needed if using built-in animations
+
+import App from './App.vue';
+
+const app = createApp(App);
+
+
+let theme = 'light';
+const darkThemeMq = window.matchMedia("(prefers-color-scheme: dark)");
+if (darkThemeMq.matches) {
+  theme = 'dark';
 }
+const vuetify = createVuetify({
+  theme: {
+    defaultTheme: theme,
+  }
+});
+app.use(vuetify);
 
-// Opens link in a default browser
-const openExternalLink = (link) => {
-  return shell.openExternal(link);
-};
-
-let windowConfig = {
-  width: 1024,
-  height: 768,
-};
-
-const createWindow = () => {
-  Object.assign(windowConfig, store.get("winBounds"));
-  // Create the browser window.
-  const mainWindow = new BrowserWindow({
-    width: windowConfig.width,
-    height: windowConfig.height,
-    icon: path.join(__dirname, 'build/icons/icon.png'),
-    webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
+const notivue = createNotivue({
+  notifications: {
+    global: {
+      duration: Infinity,
     },
-  });
-
-  mainWindow.on('close', () => {
-    store.set('winBounds', mainWindow.getBounds());
-  });
-
-  mainWindow.webContents.on('will-navigate', (e, url) => {
-    openExternalLink(url);
-    e.preventDefault();
-  });
-
-  mainWindow.webContents.on('before-input-event', (event, input) => {
-    if (input.control && input.key.toLowerCase() === 'i') {
-      mainWindow.webContents.openDevTools();
-      event.preventDefault()
-    }
-  });
-
-  // and load the index.html of the app.
-  if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
-    mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
-    // Open the DevTools.
-    // mainWindow.webContents.openDevTools();
-  } else {
-    mainWindow.loadFile(path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`));
-  }
-};
-
-// This method will be called when Electron has finished
-// initialization and is ready to create browser windows.
-// Some APIs can only be used after this event occurs.
-app.on('ready', createWindow);
-
-// Quit when all windows are closed, except on macOS. There, it's common
-// for applications and their menu bar to stay active until the user quits
-// explicitly with Cmd + Q.
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit();
-  }
+  },
 });
+app.use(notivue);
 
-app.on('activate', () => {
-  // On OS X it's common to re-create a window in the app when the
-  // dock icon is clicked and there are no other windows open.
-  if (BrowserWindow.getAllWindows().length === 0) {
-    createWindow();
-  }
-});
+app.mount('#app');
 
-// In this file you can include the rest of your app's specific main process
-// code. You can also put them in separate files and import them here.
-
-app.whenReady().then(() => {
-  Menu.setApplicationMenu(null);
-});
+function copyToClipboard(_this) {
+  const contentToCopyElement = _this.parentElement.nextSibling.getElementsByClassName('content-to-copy')[0];
+  let txt = document.createElement('textarea');
+  txt.innerHTML = contentToCopyElement.innerHTML;
+  navigator.clipboard.writeText(txt.value);
+}
+window.copyToClipboard = copyToClipboard;
