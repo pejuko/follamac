@@ -118,12 +118,11 @@
           <v-card :id="`chat-${currentChatId}`"
                   variant="outlined"
                   class="d-flex flex-column flex-grow-1 mb-3 chat">
-            <v-container>
+            <v-container fluid>
               <v-row v-for="(response, idx) in chatModel.responses">
-                <v-col v-if="response.role === 'assistant'" cols="1">
-                  <div class="chatbot" />
-                </v-col>
-                <v-col :class="[ 'response', response.role ]">
+                <div v-if="response.role === 'assistant'" class="chatbot" />
+
+                <div :class="[ 'response', response.role ]">
                   <div class="text-right mb-3">
                     <v-icon icon="mdi-content-copy" class="cursor-pointer" @click="copyResponseToClipboard(response.content)"></v-icon>
                     <v-icon icon="mdi-pencil" class="ml-3 cursor-pointer" @click="editResponseId = idx"></v-icon>
@@ -160,7 +159,7 @@ Load duration: {{ humanNumber(nanosecondsToSeconds(response.statistics.load_dura
 Eval duration: {{ humanNumber(nanosecondsToSeconds(response.statistics.eval_duration)) }} seconds
 Prompt tokens: {{ response.statistics.prompt_eval_count }}
 Eval tokens: {{ response.statistics.eval_count }}</pre>
-                </v-col>
+                </div>
 
               </v-row>
             </v-container>
@@ -654,9 +653,9 @@ Eval tokens: {{ response.statistics.eval_count }}</pre>
   }
 
   .user {
-    margin-left: 25%;
-    width: 75%;
-    max-width: 75%;
+    margin-left: 15%;
+    width: 85%;
+    max-width: 85%;
     border-bottom-left-radius: 0.5rem;
     border-bottom-right-radius: 0.5rem;
     border-top-left-radius: 0.5rem;
@@ -671,10 +670,12 @@ Eval tokens: {{ response.statistics.eval_count }}</pre>
   }
 
   .chatbot {
-    width: 32px;
-    height: 32px;
+    width: 48px;
+    height: 48px;
     margin: 0;
+    padding: 0;
     margin-top: 1rem;
+    margin-left: 0.5rem;
     background-size: cover;
   }
 
@@ -687,7 +688,7 @@ Eval tokens: {{ response.statistics.eval_count }}</pre>
   }
 
   .assistant {
-    width: calc(75% - 48px - 1rem);
+    width: calc(90% - 48px - 1rem);
     border-bottom-left-radius: 0.5rem;
     border-bottom-right-radius: 0.5rem;
     border-top-right-radius: 0.5rem;
