@@ -326,7 +326,8 @@ Eval tokens: {{ response.statistics.eval_count }}</pre>
   }
 
   function plaintextToHtml(content) {
-    return '<pre style="background: transparent; white-space: break-spaces">' + encodeHTMLEntities(content) + '</pre>';
+    const color = theme.global.name.value === 'dark' ? 'white' : 'black';
+    return `<pre style="background: transparent; color: ${color}; white-space: break-spaces">` + encodeHTMLEntities(content) + '</pre>';
   }
 
   function sanitizeHtml(content) {
