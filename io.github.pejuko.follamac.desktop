@@ -1,0 +1,10 @@
+[Desktop Entry]
+Version=0.1.1
+Type=Application
+Name=Follamac
+Comment=Follamac is a desktop application which provides convenient way to work with Ollama and large language models (LLMs).
+Exec=/app/bin/run.sh
+Icon=io.github.pejuko.follamac
+Categories=Utility;
+Terminal=false
+StartupNotify=false

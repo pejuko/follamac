@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+    <id>io.github.pejuko.follamac</id>
+
+    <name>Follamac</name>
+    <summary>Follamac is a desktop application which provides convenient way to work with Ollama and large language models (LLMs)</summary>
+
+    <metadata_license>MIT</metadata_license>
+    <project_license>MIT</project_license>
+
+    <developer id="tld.vendor">
+        <name>Petr Kovář</name>
+    </developer>
+
+    <description>
+        <p>
+            Follamac is a desktop application which provides convenient way to work with Ollama and large language models (LLMs) and provides these features:
+        </p>
+        <ul>
+            <li>pulling/deleting models</li>
+            <li>sending prompts to Ollama (chat or generate)</li>
+            <li>selecting role for a message in the chat mode and possibility to send a system message with the generate mode - basic options (temperature, threads)</li>
+            <li>basic info about selected model</li>
+            <li>code highlighting</li>
+            <li>multiple chats</li>
+            <li>editing/deleting chats</li>
+            <li>editing/deleting messages</li>
+            <li>copy code or whole message to clipboard</li>
+            <li>light and dark theme (defaults to the system setting)</li>
+        </ul>
+    </description>
+
+    <launchable type="desktop-id">io.github.pejuko.follamac.desktop</launchable>
+    <icon type="stock">io.github.pejuko.follamac</icon>
+
+    <content_rating type="oars-1.1" />
+
+    <url type="bugtracker">https://github.com/pejuko/follamac/issues</url>
+    <url type="homepage">https://pejuko.github.io/follamac/</url>
+    <url type="vcs-browser">https://github.com/pejuko/follamac</url>
+
+    <screenshots>
+        <screenshot type="default">
+            <image>https://pejuko.github.io/follamac/images/screenshot.png</image>
+            <caption>Light theme screenshot</caption>
+        </screenshot>
+    </screenshots>
+
+    <categories>
+        <category>Utility</category>
+    </categories>
+
+    <releases>
+        <release version="0.1.1" date="2024-02-25" />
+    </releases>
+</component>

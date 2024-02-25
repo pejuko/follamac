@@ -37,7 +37,11 @@
         "yarn --offline build",
         "yarn --offline dist --x64 --linux --dir",
         "cp -a dist/linux*unpacked /app/main",
-        "install -Dm755 -t /app/bin/ ../run.sh"
+        "install -Dm755 -t /app/bin/ ../run.sh",
+        "install -Dm644 io.github.pejuko.follamac.desktop -t /app/share/applications",
+        "install -Dm644 images/icons/icon.png -t /app/share/icons/hicolor/512x512/apps",
+        "mv /app/share/icons/hicolor/512x512/apps/icon.png /app/share/icons/hicolor/512x512/apps/io.github.pejuko.follamac.png",
+        "install -Dm644 io.github.pejuko.follamac.metainfo.xml -t /app/share/metainfo"
       ],
       "subdir": "main",
       "sources": [
