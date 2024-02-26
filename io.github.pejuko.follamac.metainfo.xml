@@ -3,7 +3,7 @@
     <id>io.github.pejuko.follamac</id>
 
     <name>Follamac</name>
-    <summary>Follamac is a desktop application which provides convenient way to work with Ollama and large language models (LLMs)</summary>
+    <summary>Work with Ollama from GUI</summary>
 
     <metadata_license>MIT</metadata_license>
     <project_license>MIT</project_license>
@@ -51,6 +51,6 @@
     </categories>
 
     <releases>
-        <release version="0.1.2" date="2024-02-26" />
+        <release version="0.1.3" date="2024-02-26" />
     </releases>
 </component>
