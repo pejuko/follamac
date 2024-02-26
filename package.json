@@ -1,7 +1,7 @@
 {
   "name": "follamac",
   "productName": "Follamac",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Follamac is an desktop application which provides convenient way to work with Ollama. Ollama works with large language models (LLMs).",
   "homepage": "https://github.com/pejuko/follamac",
   "repository": "https://github.com/pejuko/follamac",
