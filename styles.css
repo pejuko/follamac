@@ -15,6 +15,11 @@ h1 {
   font-size: 48px;
 }
 
+h2 {
+  text-align: center;
+  font-size: 32px;
+}
+
 img {
   display: block;
   margin: 0 auto;
@@ -23,7 +28,7 @@ img {
   border: 1px solid black;
 }
 
-.description, .sourcecode {
+.description, .sourcecode, .download {
   text-align: center;
   font-size: 24px;
   color: #333;
