@@ -49,6 +49,9 @@
     "appId": "io.github.pejuko.follamac",
     "directories": {
       "buildResources": "images"
+    },
+    "mac": {
+      "icon": "images/icons/icon.png"
     }
   }
 }
