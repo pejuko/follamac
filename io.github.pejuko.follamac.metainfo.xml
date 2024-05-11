@@ -14,7 +14,7 @@
 
     <description>
         <p>
-            You need Ollama ( https://ollama.com/ ) running on your localhost with some model.
+            You need Ollama running on your localhost with some model.
             Once Ollama is running the model can be pulled from follamac or from command line.
             From command line type something like: ollama pull llama3
             If you wish to pull from follamac you can write llama3 into "Model name to pull" input box and click the PULL button.
@@ -57,7 +57,7 @@
     </categories>
 
     <releases>
-        <release version="0.1.4" date="2024-05-11" />
+        <release version="0.1.5" date="2024-05-11" />
         <release version="0.1.3" date="2024-02-26" />
     </releases>
 </component>
