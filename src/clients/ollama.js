@@ -1,9 +1,16 @@
 export class Ollama {
+  controller = new AbortController();
+  signal = this.controller.signal;
+
   constructor(url) {
     this.url = url;
     this.headers = {
       'Content-Type': 'appication/json',
     };
+  }
+
+  abort() {
+    this.controller.abort();
   }
 
   async chat(chatRequest) {
@@ -14,6 +21,7 @@ export class Ollama {
       method: 'POST',
       headers: this.headers,
       body: JSON.stringify(data),
+      signal: this.signal,
     });
 
     return response;
@@ -27,6 +35,7 @@ export class Ollama {
       method: 'POST',
       headers: this.headers,
       body: JSON.stringify(data),
+      signal: this.signal,
     });
 
     return response;
@@ -69,6 +78,7 @@ export class Ollama {
       method: 'POST',
       headers: this.headers,
       body: JSON.stringify({ name }),
+      signal: this.signal,
     });
 
     return response;

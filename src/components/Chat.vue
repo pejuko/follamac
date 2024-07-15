@@ -198,7 +198,8 @@ Eval tokens: {{ response.statistics.eval_count }}</pre>
             </v-col>
 
             <v-col class="d-flex flex-column flex-grow-0">
-              <v-btn @click.prevent="submitPrompt" color="blue-darken-2">Submit</v-btn>
+              <v-btn v-if="lastPromptFinished === true" @click.prevent="submitPrompt" color="blue-darken-2">Submit</v-btn>
+              <v-btn v-else @click.prevent="stopCurrentPrompt" color="red-darken-2">Stop</v-btn>
 
               <v-radio-group v-model="chatModel.settingsForm.method"
                              density="compact"
@@ -272,6 +273,16 @@ Eval tokens: {{ response.statistics.eval_count }}</pre>
   const currentModel = computed(() => {
     return chatModel.value.models.find(m => m.name === chatModel.value.settingsForm.model);
   });
+
+  const lastPromptFinished = computed(() => {
+    if (chatModel.value.responses?.length > 0) {
+      return chatModel.value.responses[chatModel.value.responses.length - 1].finished;
+    }
+
+    return true;
+  });
+
+  const stopPrompt = ref(false);
 
   const theme = useTheme();
 
@@ -397,13 +408,13 @@ Eval tokens: {{ response.statistics.eval_count }}</pre>
   }
 
   // read Ollama's stream response
-  async function readOllamaResponse(response, chatElement, handleChunksCallback) {
+  async function readOllamaResponse(ollama, response, chatElement, handleChunksCallback) {
     // get the reader and read the available data received from the server in a loop
     const reader = await response.body.getReader();
     let value = await reader.read();
     let total_text = '';
     let messages = [];
-    while (value.done === false) {
+    while (value.done === false && stopPrompt.value === false) {
       // convert the data to text and combine it with already received text
       // previously received text can be incomplete so we need to always update this variable
       total_text += new TextDecoder().decode(value.value);
@@ -420,6 +431,11 @@ Eval tokens: {{ response.statistics.eval_count }}</pre>
       value = await reader.read()
     }
 
+    if (stopPrompt.value === true) {
+      ollama.abort();
+      chatModel.value.responses[chatModel.value.responses.length - 1].finished = true;
+      stopPrompt.value = false;
+    }
     return messages;
   }
 
@@ -444,11 +460,12 @@ Eval tokens: {{ response.statistics.eval_count }}</pre>
 
     try {
       // make a request to Ollama server
-      const response = await getOllama().chat({
+      const ollama = getOllama();
+      const response = await ollama.chat({
         model: chatModel.value.settingsForm.model, messages: messages, stream: true, options: getOlamaOptions()
       });
 
-      await readOllamaResponse(response, chatElement, handleChatChunks);
+      await readOllamaResponse(ollama, response, chatElement, handleChatChunks);
     } catch (e) {
       console.log(e);
       push.error(e.toString());
@@ -463,7 +480,8 @@ Eval tokens: {{ response.statistics.eval_count }}</pre>
 
     try {
       // make a request to Ollama server
-      const response = await getOllama().generate({
+      const ollama = getOllama();
+      const response = await ollama.generate({
         model: chatModel.value.settingsForm.model,
         prompt: message.content,
         images: message.images,
@@ -473,7 +491,7 @@ Eval tokens: {{ response.statistics.eval_count }}</pre>
         options: getOlamaOptions()
       });
 
-      await readOllamaResponse(response, chatElement, handleChatChunks);
+      await readOllamaResponse(ollama, response, chatElement, handleChatChunks);
     } catch (e) {
       console.log(e);
       push.error(e.toString());
@@ -535,6 +553,10 @@ Eval tokens: {{ response.statistics.eval_count }}</pre>
     } else {
       await generateWithOlama(message);
     }
+  }
+
+  function stopCurrentPrompt() {
+    stopPrompt.value = true;
   }
 
   // get list of installed models on the server
@@ -612,7 +634,8 @@ Eval tokens: {{ response.statistics.eval_count }}</pre>
     }
 
     try {
-      const response = await getOllama().pull(pullModelName.value);
+      const ollama = getOllama();
+      const response = await ollama.pull(pullModelName.value);
       if (!response.ok) {
         push.error('Cannot start pull.');
         return;
@@ -627,7 +650,7 @@ Eval tokens: {{ response.statistics.eval_count }}</pre>
       const chatElement = getChatElement();
       chatElement.scrollTo(0, chatElement.scrollHeight);
 
-      await readOllamaResponse(response, chatElement, handlePullChunks);
+      await readOllamaResponse(ollama, response, chatElement, handlePullChunks);
       await getModels();
     } catch (e) {
       console.log(e);
