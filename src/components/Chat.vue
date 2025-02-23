@@ -8,7 +8,7 @@
               <v-text-field v-model="chatModel.settingsForm.url"
                             label="Url"
                             variant="outlined"
-                            @change="getModels()"
+                            @update:modelValue="getModels()"
               />
 
               <div v-if="currentModel">
@@ -17,7 +17,7 @@
                           item-title="name"
                           item-value="name"
                           variant="outlined"
-                          @change="fetchCurrentModelDetails()"
+                          @update:modelValue="fetchCurrentModelDetails()"
                 ></v-select>
 
                 <div>
@@ -26,27 +26,35 @@
                   <i>Parametr size: </i>{{ currentModel.details.parameter_size }}<br />
                   <i>Quantization level: </i>{{ currentModel.details.quantization_level }}<br />
                   <i>Size: </i>{{ humanNumber(currentModel.size / 1024 / 1024) }} MiB<br />
+                  <i>Context length: </i>{{ currentContextLength }}<br />
                 </div>
                 <br />
 
                 <v-text-field v-model="chatModel.settingsForm.temperature"
                               label="Temperature"
                               variant="outlined"
-                              @change="change"
+                              @update:modelValue="change"
                 ></v-text-field>
 
                 <v-text-field v-model="chatModel.settingsForm.num_thread"
                               label="Threads"
                               variant="outlined"
-                              @change="change"
+                              @update:modelValue="change"
                 ></v-text-field>
 
                 <v-text-field v-if="chatModel.settingsForm.method === 'generate'"
                               v-model="chatModel.settingsForm.system"
                               label="System message"
                               variant="outlined"
-                              @change="change"
+                              @update:modelValue="change"
                 ></v-text-field>
+
+                <v-select v-model="chatModel.settingsForm.context_length"
+                          label="Context length"
+                          variant="outlined"
+                          :items="currentContextList"
+                          @update:modelValue="change"
+                ></v-select>
               </div>
 
               <div v-else class="col">
@@ -182,7 +190,7 @@ Eval tokens: {{ response.statistics.eval_count }}</pre>
                   density="compact"
                   hide-details
                   label="Images"
-                  @change="loadImages"
+                  @update:modelValue="loadImages"
               ></v-file-input>
             </v-col>
           </v-row>
@@ -274,6 +282,25 @@ Eval tokens: {{ response.statistics.eval_count }}</pre>
     return chatModel.value.models.find(m => m.name === chatModel.value.settingsForm.model);
   });
 
+  const defaultContextLength = 2048;
+  const currentContextLength = computed(() => {
+    let ctx = chatModel.value.currentModelDetail.model_info[`${chatModel.value.currentModelDetail.details.family}.context_length`];
+    if (ctx === undefined || ctx === null || ctx === '' || ctx <= 0) {
+      ctx = defaultContextLength;
+    }
+    return ctx;
+  });
+
+  const currentContextList = computed(() => {
+    let list = [];
+    let current = defaultContextLength;
+    while (current <= currentContextLength.value) {
+      list.push(current);
+      current = current * 2;
+    }
+    return list;
+  });
+
   const lastPromptFinished = computed(() => {
     if (chatModel.value.responses?.length > 0) {
       return chatModel.value.responses[chatModel.value.responses.length - 1].finished;
@@ -353,6 +380,7 @@ Eval tokens: {{ response.statistics.eval_count }}</pre>
     return {
       temperature: parseFloat(chatModel.value.settingsForm.temperature),
       num_thread: parseInt(chatModel.value.settingsForm.num_thread),
+      num_ctx: parseInt(chatModel.value.settingsForm.context_length),
     };
   }
 

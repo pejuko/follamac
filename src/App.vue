@@ -84,6 +84,7 @@
       temperature: '0.8',
       num_thread: '4',
       system: null,
+      context_length: 2048,
       context: [],
       method: 'chat',
       pastMessages: [],
