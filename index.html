@@ -11,7 +11,7 @@
   <h1>Follamac</h1>
   <img src="images/screenshot.png" alt="Screenshot" class="center-block">
   <p class="description">
-    Follamac is a desktop application which provides convenient way to work with <a href="https://ollama.com/">Ollama</a> and large language models (LLMs).
+    Follamac is a desktop application that provides a convenient way to work with <a href="https://ollama.com/">Ollama</a> and large language models (LLMs).
   </p>
 
   <h2>Download</h2>
@@ -27,5 +27,17 @@
     Source code is hosted on <a href="https://github.com/pejuko/follamac/">https://github.com/pejuko/follamac/</a>
   </p>
 </div>
+<script>
+  (function() {
+    // Check system preference on load
+    const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    document.body.classList.toggle('dark-theme', isDark);
+    
+    // Listen for system theme changes
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+      document.body.classList.toggle('dark-theme', e.matches);
+    });
+  })();
+</script>
 </body>
 </html>
