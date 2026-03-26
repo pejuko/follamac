@@ -9,7 +9,7 @@
 <body>
 <div class="container">
   <h1>Follamac</h1>
-  <img src="images/screenshot.png" alt="Screenshot" class="center-block">
+  <img src="images/screenshot.png" alt="Screenshot" class="center-block" id="main-image">
   <p class="description">
     Follamac is a desktop application that provides a convenient way to work with <a href="https://ollama.com/">Ollama</a> and large language models (LLMs).
   </p>
@@ -33,10 +33,20 @@
     const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     document.body.classList.toggle('dark-theme', isDark);
     
+    // Set initial image based on theme
+    updateImage(isDark);
+    
     // Listen for system theme changes
     window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
       document.body.classList.toggle('dark-theme', e.matches);
+      updateImage(e.matches);
     });
+    
+    // Update image source based on theme
+    function updateImage(isDarkTheme) {
+      const img = document.getElementById('main-image');
+      img.src = isDarkTheme ? 'images/screenshot-dark.png' : 'images/screenshot.png';
+    }
   })();
 </script>
 </body>
